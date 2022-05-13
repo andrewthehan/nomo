@@ -19,6 +19,7 @@ import dev.andrewhan.nomo.sdk.util.getAllAssignableTypes
 import dev.andrewhan.nomo.sdk.util.getTopologicalSort
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.filter
@@ -31,8 +32,6 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 fun engine(builder: EngineBuilder.() -> Unit): Engine = EngineBuilder().apply(builder).build()
-
-inline fun <reified T> key() = object : Key<T>() {}
 
 data class SystemMetadata<EventType : Event, SystemType : System<EventType>>(
   val systemKey: Key<SystemType>
@@ -53,6 +52,12 @@ data class SystemMetadata<EventType : Event, SystemType : System<EventType>>(
   }
 }
 
+inline fun <reified T> key(): Key<T> = object : Key<T>() {}
+
+@Suppress("UNCHECKED_CAST") // System has one Event type parameter
+inline fun <reified T : System<*>> systemKey(): Key<System<Event>> =
+  object : Key<T>() {} as Key<System<Event>>
+
 class EngineBuilder {
   private val entityComponentStore = NomoEntityComponentStore()
   private val eventStore = NomoEventStore()
@@ -62,21 +67,15 @@ class EngineBuilder {
     mutableMapOf()
 
   inline fun <reified SystemType : System<*>> add() {
-    val systemKey = key<SystemType>()
-    @Suppress("UNCHECKED_CAST") // System has one Event type parameter
-    val systemMetadata = SystemMetadata(systemKey as Key<System<Event>>)
+    val systemKey = systemKey<SystemType>()
+    val systemMetadata = SystemMetadata(systemKey)
     systemOrder.addNode(systemMetadata)
     systemMetadataMap[systemKey] = systemMetadata
   }
 
   inline fun <
-    reified EventType : Event, reified A : System<EventType>, reified B : System<EventType>
-  > order() {
-    @Suppress("UNCHECKED_CAST") // System has one Event type parameter
-    systemOrder.addEdge(
-      systemMetadataMap[key<A>() as Key<System<Event>>]!!,
-      systemMetadataMap[key<B>() as Key<System<Event>>]!!
-    )
+    EventType : Event, reified A : System<EventType>, reified B : System<EventType>> order() {
+    systemOrder.addEdge(systemMetadataMap[systemKey<A>()]!!, systemMetadataMap[systemKey<B>()]!!)
   }
 
   internal fun build(): Engine {
@@ -128,6 +127,10 @@ class BasicEngine(
       eventScope.launch { system.start(flow) }
     }
     dispatchEvent(StartEvent)
+  }
+
+  override suspend fun stop() {
+    eventScope.cancel()
   }
 
   @ExperimentalTime

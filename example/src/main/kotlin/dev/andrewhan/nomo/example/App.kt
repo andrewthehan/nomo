@@ -48,7 +48,7 @@ class DebugSystem @Inject constructor(private val engine: BasicEngine) : NomoSys
 class StartSystem @Inject constructor(private val engine: BasicEngine) : NomoSystem<StartEvent>() {
   override suspend fun handle(event: StartEvent) {
     engine.add("me", HealthComponent(100.0))
-    engine.add("me", ArmorComponent(.5))
+    engine.add("me", ArmorComponent(.25))
     engine.add("you", HealthComponent(100.0))
     engine.add("you", ShieldComponent(100.0))
   }
@@ -119,7 +119,8 @@ class ArmorSystem @Inject constructor(private val engine: BasicEngine) : NomoSys
 }
 
 data class ShieldComponent(var amount: Double) : Component, Exclusive {
-  val isDepleted get() = amount <= 0.0
+  val isDepleted
+    get() = amount <= 0.0
 
   fun absorb(damage: Double): Double {
     val damageMitigated = min(damage, amount)
@@ -165,7 +166,7 @@ class ShutdownSystem @Inject constructor(private val engine: BasicEngine) :
   NomoSystem<DeathEvent>() {
   override suspend fun handle(event: DeathEvent) {
     if (engine.entities.isEmpty()) {
-      exitProcess(0)
+      engine.stop()
     }
   }
 }

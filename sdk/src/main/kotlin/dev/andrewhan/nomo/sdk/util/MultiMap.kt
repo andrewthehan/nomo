@@ -31,23 +31,27 @@ abstract class MultiMap<K, V> {
   operator fun get(key: K): Set<V> = map[key] ?: setOf()
 
   fun put(key: K, value: V) {
-    val values = map[key] ?: newValueSet()
-    values.add(value)
-    map[key] = values
+    synchronized(this) {
+      val values = map[key] ?: newValueSet()
+      values.add(value)
+      map[key] = values
+    }
   }
 
   fun remove(key: K): Set<V> = map.remove(key) ?: setOf()
 
   fun remove(key: K, value: V): Boolean {
-    if (!map.containsKey(key)) {
-      return false
-    }
+    synchronized(this) {
+      if (!map.containsKey(key)) {
+        return false
+      }
 
-    val values = map[key]!!
-    val removed = values.remove(value)
-    if (removed && values.isEmpty()) {
-      map.remove(key)
+      val values = map[key]!!
+      val removed = values.remove(value)
+      if (removed && values.isEmpty()) {
+        map.remove(key)
+      }
+      return removed
     }
-    return removed
   }
 }

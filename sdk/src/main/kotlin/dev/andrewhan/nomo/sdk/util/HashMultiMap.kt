@@ -1,6 +1,8 @@
 package dev.andrewhan.nomo.sdk.util
 
+import java.util.concurrent.ConcurrentHashMap
+
 class HashMultiMap<K, V> : MultiMap<K, V>() {
-  override fun newMap(): MutableMap<K, MutableSet<V>> = hashMapOf()
-  override fun newValueSet(): MutableSet<V> = hashSetOf()
+  override fun newMap(): MutableMap<K, MutableSet<V>> = ConcurrentHashMap()
+  override fun newValueSet(): MutableSet<V> = ConcurrentHashMap.newKeySet()
 }
