@@ -7,7 +7,7 @@ val ktxVersion = "1.10.0-rc1"
 
 dependencies {
     implementation(project(":core"))
-    implementation(project(":integration"))
+    implementation(project(":integrations:libgdx"))
     implementation(project(":sdk"))
 
     implementation("javax.inject:javax.inject:1")

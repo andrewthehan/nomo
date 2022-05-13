@@ -14,7 +14,6 @@ import dev.andrewhan.nomo.sdk.systems.NomoSystem
 import javax.inject.Inject
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.system.exitProcess
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 
