@@ -7,7 +7,7 @@ import dev.andrewhan.nomo.sdk.exceptions.ExclusiveException
 import dev.andrewhan.nomo.sdk.exceptions.PendantException
 import dev.andrewhan.nomo.sdk.interfaces.Exclusive
 import dev.andrewhan.nomo.sdk.interfaces.Pendant
-import dev.andrewhan.nomo.sdk.util.BiMultiMap
+import dev.andrewhan.nomo.sdk.util.IdentityBiMultiMap
 
 inline fun <reified ComponentType : Component> EntityComponentStore.getComponents(entity: Entity) =
   this[entity].filterIsInstance<ComponentType>()
@@ -18,11 +18,21 @@ inline fun <reified ComponentType : Component> EntityComponentStore.getComponent
 inline fun <reified ComponentType : Component> EntityComponentStore.getEntities() =
   getComponents<ComponentType>().map(this::get).flatten().distinct()
 
-fun <PendantComponent> EntityComponentStore.getEntity(component: PendantComponent): Entity? where
+fun <PendantComponent> EntityComponentStore.getEntity(component: PendantComponent): Entity where
 PendantComponent : Component,
-PendantComponent : Pendant = this[component].singleOrNull()
+PendantComponent : Pendant = this[component].single()
+
+fun <PendantComponent> EntityComponentStore.getEntityOrNull(
+  component: PendantComponent
+): Entity? where PendantComponent : Component, PendantComponent : Pendant =
+  this[component].singleOrNull()
 
 inline fun <reified ExclusiveComponent> EntityComponentStore.getComponent(
+  entity: Entity
+): ExclusiveComponent where ExclusiveComponent : Component, ExclusiveComponent : Exclusive =
+  this[entity].filterIsInstance<ExclusiveComponent>().single()
+
+inline fun <reified ExclusiveComponent> EntityComponentStore.getComponentOrNull(
   entity: Entity
 ): ExclusiveComponent? where ExclusiveComponent : Component, ExclusiveComponent : Exclusive =
   this[entity].filterIsInstance<ExclusiveComponent>().singleOrNull()
@@ -45,7 +55,7 @@ interface EntityComponentStore : Store {
 }
 
 internal class NomoEntityComponentStore : EntityComponentStore {
-  private val entitiesToComponentsMap = BiMultiMap<Entity, Component>()
+  private val entitiesToComponentsMap = IdentityBiMultiMap<Entity, Component>()
 
   override val entities: Set<Entity>
     get() = entitiesToComponentsMap.getKeys()
@@ -79,8 +89,7 @@ internal class NomoEntityComponentStore : EntityComponentStore {
   override fun remove(entity: Entity, component: Component) =
     entitiesToComponentsMap.remove(entity, component)
 
-  override fun remove(entity: Entity) = entitiesToComponentsMap.removeKey(entity) ?: emptySet()
+  override fun remove(entity: Entity) = entitiesToComponentsMap.removeKey(entity)
 
-  override fun remove(component: Component) =
-    entitiesToComponentsMap.removeValue(component) ?: emptySet()
+  override fun remove(component: Component) = entitiesToComponentsMap.removeValue(component)
 }

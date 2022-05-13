@@ -28,6 +28,7 @@ fun <EventType : Event> EventStore.flowFor(eventType: KClass<EventType>): Flow<E
 
 interface EventStore : Store {
   fun flow(): SharedFlow<Event>
+
   suspend fun dispatchEvent(event: Event)
 }
 

@@ -1,60 +1,81 @@
 package dev.andrewhan.nomo.sdk.util
 
-class BiMultiMap<K, V> {
-  private val forwardMap: MultiMap<K, V>
-  private val reverseMap: MultiMap<V, K>
-  private val reverse: BiMultiMap<V, K>
+import kotlin.reflect.full.createInstance
 
-  constructor() {
-    forwardMap = MultiMap()
-    reverseMap = MultiMap()
-    reverse = BiMultiMap(reverseMap, forwardMap, this)
+abstract class BiMultiMap<K, V> {
+  // var instead of val to support the constructor
+  private var forwardMap: MultiMap<K, V>
+  private var reverseMap: MultiMap<V, K>
+  private var reverse: BiMultiMap<V, K>
+
+  abstract fun <K, V> newMultiMap(): MultiMap<K, V>
+
+  private fun self() = this
+
+  constructor(reverse: BiMultiMap<V, K>) {
+    reverse.also {
+      this.forwardMap = it.reverseMap
+      this.reverseMap = it.forwardMap
+      this.reverse = it
+    }
   }
 
-  private constructor(
-    forwardMap: MultiMap<K, V>,
-    reverseMap: MultiMap<V, K>,
-    reverse: BiMultiMap<V, K>
-  ) {
-    this.forwardMap = forwardMap
-    this.reverseMap = reverseMap
-    this.reverse = reverse
+  constructor(reverseConstructor: (forward: BiMultiMap<K, V>) -> BiMultiMap<V, K>) {
+    forwardMap = this.newMultiMap()
+    reverseMap = this.newMultiMap()
+    reverse =
+      reverseConstructor(self()).also {
+        it.forwardMap = reverseMap
+        it.reverseMap = forwardMap
+        it.reverse = self()
+      }
   }
 
   fun clone(): BiMultiMap<K, V> {
-    return BiMultiMap<K, V>().apply {
+    return this::class.createInstance().apply {
       forwardMap.entries.forEach { (key, value) -> value.forEach { this.put(key, it) } }
     }
   }
 
-  fun getKeys() = forwardMap.keys.toSet()
+  fun getKeys(): Set<K> = forwardMap.keys.toSet()
 
-  fun getValues() = reverseMap.keys.toSet()
+  fun getValues(): Set<V> = reverseMap.keys.toSet()
 
-  operator fun get(key: K) = forwardMap[key].toSet()
+  operator fun get(key: K): Set<V> = forwardMap[key].toSet()
 
-  fun getByValue(value: V) = reverseMap[value].toSet()
+  fun getByValue(value: V): Set<K> = reverseMap[value].toSet()
 
-  fun containsKey(key: K) = forwardMap.containsKey(key)
+  fun containsKey(key: K): Boolean = forwardMap.containsKey(key)
 
-  fun containsValue(value: V) = reverseMap.containsKey(value)
+  fun containsValue(value: V): Boolean = reverseMap.containsKey(value)
 
   fun put(key: K, value: V) {
     forwardMap.put(key, value)
     reverseMap.put(value, key)
   }
 
-  fun removeKey(key: K): MutableSet<V>? {
+  fun removeKey(key: K): Set<V> {
     val values = forwardMap.remove(key)
-    values?.forEach { reverseMap.remove(it, key) }
+    if (!values.all { reverseMap.remove(it, key) }) {
+      throw AssertionError(
+        "All values removed from the forwardMap are expected to exist in the " +
+          "reverseMap but were not."
+      )
+    }
     return values
   }
 
-  fun removeValue(value: V): MutableSet<K>? {
+  fun removeValue(value: V): Set<K> {
     val keys = reverseMap.remove(value)
-    keys?.forEach { forwardMap.remove(it, value) }
+    if (!keys.all { forwardMap.remove(it, value) }) {
+      throw AssertionError(
+        "All keys removed from the reverseMap are expected to exist in the " +
+          "forwardMap but were not."
+      )
+    }
     return keys
   }
 
-  fun remove(key: K, value: V) = forwardMap.remove(key, value) && reverseMap.remove(value, key)
+  fun remove(key: K, value: V): Boolean =
+    forwardMap.remove(key, value) && reverseMap.remove(value, key)
 }

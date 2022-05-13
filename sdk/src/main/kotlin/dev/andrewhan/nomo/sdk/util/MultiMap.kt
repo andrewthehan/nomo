@@ -1,37 +1,53 @@
 package dev.andrewhan.nomo.sdk.util
 
-open class MultiMap<K, V> {
-  private val map = HashMap<K, MutableSet<V>>()
-  val entries = map.entries
-  val keys = map.keys
-  val size = map.size
-  val values = map.values
+import kotlin.reflect.full.createInstance
+
+abstract class MultiMap<K, V> {
+  private val map: MutableMap<K, MutableSet<V>> = this.newMap()
+
+  abstract fun newMap(): MutableMap<K, MutableSet<V>>
+
+  abstract fun newValueSet(): MutableSet<V>
+
+  val entries: Set<Map.Entry<K, Set<V>>>
+    get() = map.entries
+  val keys: Set<K>
+    get() = map.keys
+  val values: Collection<Set<V>>
+    get() = map.values
+  val size: Int
+    get() = map.size
 
   fun clone(): Any {
-    val clone = MultiMap<K, V>()
+    val clone = this::class.createInstance()
     entries.forEach { (key, value) -> value.forEach { clone.put(key, it) } }
     return clone
   }
 
   fun containsKey(key: K): Boolean = map.containsKey(key)
+
   fun containsValue(value: V): Boolean = map.values.any { it.contains(value) }
 
-  operator fun get(key: K) = map[key] ?: mutableSetOf()
+  operator fun get(key: K): Set<V> = map[key] ?: setOf()
 
-  open fun put(key: K, value: V) {
-    val values = get(key)
+  fun put(key: K, value: V) {
+    val values = map[key] ?: newValueSet()
     values.add(value)
     map[key] = values
   }
 
-  open fun remove(key: K) = map.remove(key)
+  fun remove(key: K): Set<V> = map.remove(key) ?: setOf()
 
-  open fun remove(key: K, value: V): Boolean {
-    val values = get(key)
-    val toReturn = values.remove(value)
-    if (values.isEmpty()) {
+  fun remove(key: K, value: V): Boolean {
+    if (!map.containsKey(key)) {
+      return false
+    }
+
+    val values = map[key]!!
+    val removed = values.remove(value)
+    if (removed && values.isEmpty()) {
       map.remove(key)
     }
-    return toReturn
+    return removed
   }
 }
