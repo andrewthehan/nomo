@@ -2,6 +2,11 @@ plugins { id("org.jetbrains.kotlin.jvm") }
 
 repositories { mavenCentral() }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
         jvmTarget = "11"
@@ -20,9 +25,6 @@ dependencies {
 
     // Kotlin reflection
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-
-    // Align versions of all Kotlin components
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
 

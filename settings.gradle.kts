@@ -9,4 +9,4 @@
 
 rootProject.name = "nomo"
 
-include("example", "core", "sdk", "integrations:libgdx")
+include("boot", "core", "sdk", "math", "integrations:libgdx", "example")
