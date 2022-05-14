@@ -1,6 +1,6 @@
 package dev.andrewhan.nomo.math
 
-@Suppress("UNCHECKED_CAST")
+@Suppress("UNCHECKED_CAST") // property checked in the when
 fun <NumberType : Number> Number.cast(): NumberType {
   return when (this) {
     is Long -> this.toLong() as NumberType

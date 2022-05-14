@@ -59,11 +59,8 @@ abstract class BiMultiMap<K, V> {
   fun removeKey(key: K): Set<V> {
     synchronized(this) {
       val values = forwardMap.remove(key)
-      if (!values.all { reverseMap.remove(it, key) }) {
-        throw AssertionError(
-          "All values removed from the forwardMap are expected to exist in the " +
-            "reverseMap but were not."
-        )
+      assert(values.all { reverseMap.remove(it, key) }) {
+        "All values removed from the forwardMap should exist in the reverseMap but do not."
       }
       return values
     }
@@ -72,11 +69,8 @@ abstract class BiMultiMap<K, V> {
   fun removeValue(value: V): Set<K> {
     synchronized(this) {
       val keys = reverseMap.remove(value)
-      if (!keys.all { forwardMap.remove(it, value) }) {
-        throw AssertionError(
-          "All keys removed from the reverseMap are expected to exist in the " +
-            "forwardMap but were not."
-        )
+      assert(keys.all { forwardMap.remove(it, value) }) {
+        "All keys removed from the reverseMap should exist in the forwardMap but do not."
       }
       return keys
     }
