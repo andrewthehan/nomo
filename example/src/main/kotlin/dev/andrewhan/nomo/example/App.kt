@@ -11,8 +11,8 @@ import dev.andrewhan.nomo.boot.physics.components.Position2dComponent
 import dev.andrewhan.nomo.boot.physics.components.Velocity2dComponent
 import dev.andrewhan.nomo.boot.physics.systems.Physics2dStepSystem
 import dev.andrewhan.nomo.integration.libgdx.Game
-import dev.andrewhan.nomo.sdk.BasicEngine
-import dev.andrewhan.nomo.sdk.engine
+import dev.andrewhan.nomo.sdk.engines.NomoEngine
+import dev.andrewhan.nomo.sdk.engines.basicEngine
 import dev.andrewhan.nomo.sdk.events.StartEvent
 import dev.andrewhan.nomo.sdk.events.UpdateEvent
 import dev.andrewhan.nomo.sdk.systems.NomoSystem
@@ -24,7 +24,7 @@ import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 fun main() {
-  val engine = engine {
+  val engine = basicEngine {
     add<DebugSystem>()
     add<StartSystem>()
     add<DeathSystem>()
@@ -45,7 +45,7 @@ fun main() {
 }
 
 @ExperimentalTime
-class DebugSystem @Inject constructor(private val engine: BasicEngine) : NomoSystem<UpdateEvent>() {
+class DebugSystem @Inject constructor(private val engine: NomoEngine) : NomoSystem<UpdateEvent>() {
   private var elapsed: Duration = Duration.ZERO
 
   override suspend fun handle(event: UpdateEvent) {
@@ -54,15 +54,13 @@ class DebugSystem @Inject constructor(private val engine: BasicEngine) : NomoSys
     println("[$elapsed]")
     engine.entities.forEach { entity ->
       println(entity)
-      engine[entity].forEach {component ->
-        println("\t$component")
-      }
+      engine[entity].forEach { component -> println("\t$component") }
     }
     println()
   }
 }
 
-class StartSystem @Inject constructor(private val engine: BasicEngine) : NomoSystem<StartEvent>() {
+class StartSystem @Inject constructor(private val engine: NomoEngine) : NomoSystem<StartEvent>() {
   override suspend fun handle(event: StartEvent) {
     //    engine.add("me", HealthComponent(100F))
     //    engine.add("me", ArmorComponent(.25F))
@@ -76,10 +74,10 @@ class StartSystem @Inject constructor(private val engine: BasicEngine) : NomoSys
 }
 
 @ExperimentalTime
-class StrongPoisonSystem @Inject constructor(engine: BasicEngine) : PoisonSystem(engine)
+class StrongPoisonSystem @Inject constructor(engine: NomoEngine) : PoisonSystem(engine)
 
 @ExperimentalTime
-open class PoisonSystem @Inject constructor(private val engine: BasicEngine) :
+open class PoisonSystem @Inject constructor(private val engine: NomoEngine) :
   NomoSystem<UpdateEvent>() {
   private val dps = 10
 
@@ -90,7 +88,7 @@ open class PoisonSystem @Inject constructor(private val engine: BasicEngine) :
   }
 }
 
-class ShutdownSystem @Inject constructor(private val engine: BasicEngine) :
+class ShutdownSystem @Inject constructor(private val engine: NomoEngine) :
   NomoSystem<DeathEvent>() {
   override suspend fun handle(event: DeathEvent) {
     if (engine.entities.isEmpty()) {

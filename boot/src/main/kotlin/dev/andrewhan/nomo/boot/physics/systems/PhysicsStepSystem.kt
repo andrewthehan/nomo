@@ -19,7 +19,7 @@ import dev.andrewhan.nomo.math.vectors.isZero
 import dev.andrewhan.nomo.math.vectors.plusAssign
 import dev.andrewhan.nomo.math.vectors.set
 import dev.andrewhan.nomo.math.vectors.times
-import dev.andrewhan.nomo.sdk.BasicEngine
+import dev.andrewhan.nomo.sdk.engines.NomoEngine
 import dev.andrewhan.nomo.sdk.events.UpdateEvent
 import dev.andrewhan.nomo.sdk.interfaces.Exclusive
 import dev.andrewhan.nomo.sdk.stores.getComponent
@@ -30,7 +30,7 @@ import javax.inject.Inject
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 
-abstract class PhysicsStepSystem(protected val engine: BasicEngine) : NomoSystem<UpdateEvent>() {
+abstract class PhysicsStepSystem(protected val engine: NomoEngine) : NomoSystem<UpdateEvent>() {
   protected inline fun <reified AccelerationType, reified KineticType> computeAcceleration() where
   AccelerationType : AccelerationComponent,
   AccelerationType : MutableVector<Float>,
@@ -69,7 +69,7 @@ abstract class PhysicsStepSystem(protected val engine: BasicEngine) : NomoSystem
 }
 
 @ExperimentalTime
-class Physics2dStepSystem @Inject constructor(engine: BasicEngine) : PhysicsStepSystem(engine) {
+class Physics2dStepSystem @Inject constructor(engine: NomoEngine) : PhysicsStepSystem(engine) {
   override suspend fun handle(event: UpdateEvent) {
     computeAcceleration<Acceleration2dComponent, Kinetic2dComponent>()
     step<Velocity2dComponent, Position2dComponent>(event.elapsed.toFloat(DurationUnit.SECONDS))
@@ -78,7 +78,7 @@ class Physics2dStepSystem @Inject constructor(engine: BasicEngine) : PhysicsStep
 }
 
 @ExperimentalTime
-class Physics3dStepSystem @Inject constructor(engine: BasicEngine) : PhysicsStepSystem(engine) {
+class Physics3dStepSystem @Inject constructor(engine: NomoEngine) : PhysicsStepSystem(engine) {
   override suspend fun handle(event: UpdateEvent) {
     computeAcceleration<Acceleration3dComponent, Kinetic3dComponent>()
     step<Velocity3dComponent, Position3dComponent>(event.elapsed.toFloat(DurationUnit.SECONDS))
