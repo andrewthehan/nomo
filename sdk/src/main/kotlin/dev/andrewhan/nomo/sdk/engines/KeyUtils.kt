@@ -8,12 +8,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
+import kotlin.reflect.KClass
 
-inline fun <reified T> key(): Key<T> = object : Key<T>() {}
+inline fun <reified T> key(annotation: KClass<out Annotation>? = null): Key<T> =
+  if (annotation == null) {
+    object : Key<T>() {}
+  } else {
+    object : Key<T>(annotation.java) {}
+  }
 
 @Suppress("UNCHECKED_CAST") // System has one Event type parameter
-inline fun <reified T : System<*>> systemKey(): Key<System<Event>> =
-  object : Key<T>() {} as Key<System<Event>>
+inline fun <reified T : System<*>> systemKey(): Key<System<Event>> = key<T>() as Key<System<Event>>
 
 fun <EventType : Event> EventStore.flowFor(key: Key<EventType>): Flow<EventType> =
   flow()

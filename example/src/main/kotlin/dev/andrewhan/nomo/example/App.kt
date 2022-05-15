@@ -12,16 +12,22 @@ import dev.andrewhan.nomo.boot.combat.systems.ShieldSystem
 import dev.andrewhan.nomo.boot.physics.components.Position2dComponent
 import dev.andrewhan.nomo.boot.physics.packages.kinematic2dComponentPackage
 import dev.andrewhan.nomo.boot.physics.systems.Physics2dStepSystem
+import dev.andrewhan.nomo.core.Component
 import dev.andrewhan.nomo.integration.libgdx.Game
 import dev.andrewhan.nomo.sdk.engines.NomoEngine
 import dev.andrewhan.nomo.sdk.engines.basicEngine
 import dev.andrewhan.nomo.sdk.events.StartEvent
 import dev.andrewhan.nomo.sdk.events.UpdateEvent
-import dev.andrewhan.nomo.sdk.stores.getEntities
+import dev.andrewhan.nomo.sdk.interfaces.Exclusive
+import dev.andrewhan.nomo.sdk.stores.getComponents
 import dev.andrewhan.nomo.sdk.systems.NomoSystem
+import dev.andrewhan.nomo.sdk.util.isZero
+import dev.andrewhan.nomo.sdk.util.min
 import dev.andrewhan.nomo.sdk.util.toFloat
 import javax.inject.Inject
+import javax.inject.Qualifier
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 
@@ -36,7 +42,8 @@ fun main() {
     add<ArmorSystem>()
     add<ShieldSystem>()
     add<PoisonSystem>()
-    add<StrongPoisonSystem>()
+
+    bindConstant(Poison::class, 10F)
 
     add<Physics2dStepSystem>()
 
@@ -64,6 +71,7 @@ class DebugSystem @Inject constructor(private val engine: NomoEngine) : NomoSyst
   }
 }
 
+@ExperimentalTime
 class StartSystem @Inject constructor(private val engine: NomoEngine) : NomoSystem<StartEvent>() {
   override suspend fun handle(event: StartEvent) {
     engine.apply {
@@ -71,6 +79,7 @@ class StartSystem @Inject constructor(private val engine: NomoEngine) : NomoSyst
 
       "me" bind HealthComponent(100F)
       "me" bind ArmorComponent(.25F)
+      "me" bind PoisonComponent(5.seconds)
       "me" bind
         kinematic2dComponentPackage {
           velocity {
@@ -81,21 +90,32 @@ class StartSystem @Inject constructor(private val engine: NomoEngine) : NomoSyst
 
       "you" bind HealthComponent(100F)
       "you" bind ShieldComponent(100F)
+      "you" bind PoisonComponent(5.seconds)
     }
   }
 }
 
-@ExperimentalTime
-class StrongPoisonSystem @Inject constructor(engine: NomoEngine) : PoisonSystem(engine)
+@Qualifier annotation class Poison
+
+@ExperimentalTime data class PoisonComponent(var duration: Duration) : Component, Exclusive
 
 @ExperimentalTime
-open class PoisonSystem @Inject constructor(private val engine: NomoEngine) :
+open class PoisonSystem
+@Inject
+constructor(private val engine: NomoEngine, @Poison private val dps: Float) :
   NomoSystem<UpdateEvent>() {
-  private val dps = 10
 
   override suspend fun handle(event: UpdateEvent) {
-    engine.getEntities<HealthComponent>().forEach {
-      engine.dispatchEvent(DamageEvent(event.elapsed.toFloat(DurationUnit.SECONDS) * dps, it))
+    engine.getComponents<PoisonComponent>().forEach { poison ->
+      val minDuration = min(poison.duration, event.elapsed)
+      poison.duration -= minDuration
+
+      if (poison.duration.isZero) {
+        engine.remove(poison)
+      }
+
+      val damage = minDuration.toFloat(DurationUnit.SECONDS) * dps
+      engine[poison].forEach { entity -> engine.dispatchEvent(DamageEvent(damage, entity)) }
     }
   }
 }

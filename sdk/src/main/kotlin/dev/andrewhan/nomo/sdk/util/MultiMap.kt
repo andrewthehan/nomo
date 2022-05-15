@@ -28,7 +28,8 @@ abstract class MultiMap<K, V> {
 
   fun containsValue(value: V): Boolean = map.values.any { it.contains(value) }
 
-  operator fun get(key: K): Set<V> = map[key] ?: setOf()
+  // call toSet() to return a separate instance to avoid concurrent modification issues
+  operator fun get(key: K): Set<V> = map[key]?.toSet() ?: setOf()
 
   fun put(key: K, value: V) {
     synchronized(this) {

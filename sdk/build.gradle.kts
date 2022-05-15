@@ -7,5 +7,5 @@ val guiceVersion = "5.1.0"
 dependencies {
     api(project(":core"))
 
-    implementation("com.google.inject:guice:$guiceVersion")
+    api("com.google.inject:guice:$guiceVersion")
 }

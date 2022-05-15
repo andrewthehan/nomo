@@ -22,19 +22,28 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import javax.inject.Singleton
+import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 fun basicEngine(builder: BasicEngineBuilder.() -> Unit): NomoEngine =
   BasicEngineBuilder().apply(builder).build()
 
-class BasicEngineBuilder {
-  private val entityComponentStore = NomoEntityComponentStore()
-  private val eventStore = NomoEventStore()
-
+class BasicEngineBuilder internal constructor() : AbstractModule(), EngineBuilder {
   val systemOrder: DirectedGraph<SystemMetadata<Event, System<Event>>> = DirectedGraph()
   val systemMetadataMap: MutableMap<Key<System<Event>>, SystemMetadata<Event, System<Event>>> =
     mutableMapOf()
+
+  val constantBindings: MutableMap<Key<Any>, Any> = mutableMapOf()
+
+  override fun configure() {
+    systemMetadataMap.values.forEach { bind(it.systemKey).asEagerSingleton() }
+    constantBindings.forEach { bind(it.key).toInstance(it.value) }
+  }
+
+  @Provides
+  @Singleton
+  private fun providesEngine(injector: Injector): NomoEngine = BasicEngine(injector, systemOrder)
 
   inline fun <reified SystemType : System<*>> add() {
     val systemKey = systemKey<SystemType>()
@@ -48,30 +57,26 @@ class BasicEngineBuilder {
     systemOrder.addEdge(systemMetadataMap[systemKey<A>()]!!, systemMetadataMap[systemKey<B>()]!!)
   }
 
-  internal fun build(): NomoEngine {
-    val injector =
-      Guice.createInjector(
-        object : AbstractModule() {
-          override fun configure() {
-            systemMetadataMap.values.forEach { bind(it.systemKey).asEagerSingleton() }
-          }
+  inline fun <reified T> bindConstant(annotation: KClass<out Annotation>, constant: T) {
+    @Suppress("UNCHECKED_CAST") // T is Any
+    val key = key<T>(annotation) as Key<Any>
+    check(!constantBindings.contains(key)) {
+      "A constant is already bound to @${annotation.simpleName} ${T::class.simpleName}."
+    }
+    constantBindings[key] = constant as Any
+  }
 
-          @Provides
-          @Singleton
-          private fun providesEngine(injector: Injector): NomoEngine =
-            BasicEngine(injector, systemOrder, eventStore, entityComponentStore)
-        }
-      )
+  override fun build(): NomoEngine {
+    val injector = Guice.createInjector(this)
     return injector.getInstance(key<NomoEngine>())
   }
 }
 
-private class BasicEngine(
+class BasicEngine
+internal constructor(
   private val injector: Injector,
-  private val systemOrder: DirectedGraph<SystemMetadata<Event, System<Event>>>,
-  eventStore: EventStore,
-  entityComponentStore: EntityComponentStore,
-) : NomoEngine, EventStore by eventStore, EntityComponentStore by entityComponentStore {
+  private val systemOrder: DirectedGraph<SystemMetadata<Event, System<Event>>>
+) : NomoEngine, EventStore by NomoEventStore(), EntityComponentStore by NomoEntityComponentStore() {
   private val eventScope = CoroutineScope(Dispatchers.Default)
 
   override suspend fun start() {
