@@ -2,6 +2,5 @@ package dev.andrewhan.nomo.math.shapes
 
 import dev.andrewhan.nomo.math.vectors.Vector2f
 
-open class Circle : RegularPolygon {
-  constructor(center: Vector2f, radius: Float) : super(center, radius, 100)
-}
+data class Circle(override val center: Vector2f, override val radius: Float) :
+  RegularPolygon(center, radius, 100)

@@ -10,14 +10,14 @@ interface PositionComponent : Component, Exclusive
 
 // delegate's member and interface's hidden member are the same
 @Suppress("DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE")
-class Position2dComponent(x: Float = 0F, y: Float = 0F) :
+class Position2dComponent(x: Float = 0f, y: Float = 0f) :
   PositionComponent, MutableVector2f by mutableVectorOf(x, y) {
   override fun toString() = "${Position2dComponent::class.simpleName}(x=$x,y=$y)"
 }
 
 // delegate's member and interface's hidden member are the same
 @Suppress("DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE")
-class Position3dComponent(x: Float = 0F, y: Float = 0F, z: Float = 0F) :
+class Position3dComponent(x: Float = 0f, y: Float = 0f, z: Float = 0f) :
   PositionComponent, MutableVector3f by mutableVectorOf(x, y, z) {
   override fun toString() = "${Position3dComponent::class.simpleName}(x=$x,y=$y,z=$z)"
 }

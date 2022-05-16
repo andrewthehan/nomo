@@ -1,26 +1,38 @@
 package dev.andrewhan.nomo.integration.libgdx
 
 import com.badlogic.gdx.Application
+import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration
 import com.badlogic.gdx.graphics.OrthographicCamera
-import com.badlogic.gdx.graphics.g2d.BitmapFont
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
-import dev.andrewhan.nomo.core.Engine
+import dev.andrewhan.nomo.integration.libgdx.events.LibgdxRenderEvent
+import dev.andrewhan.nomo.sdk.engines.NomoEngine
+import dev.andrewhan.nomo.sdk.events.UpdateEvent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import ktx.app.KtxApplicationAdapter
+import ktx.async.KTX
+import ktx.async.KtxAsync
+import ktx.async.newAsyncContext
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
-import kotlinx.coroutines.runBlocking
-import ktx.app.KtxGame
-import ktx.app.KtxScreen
-import ktx.graphics.use
 
 @ExperimentalTime
 class Game(
   private val title: String,
   private val width: Int,
   private val height: Int,
-  private val engine: Engine
-) : KtxGame<KtxScreen>() {
+  private val engine: NomoEngine
+) : KtxApplicationAdapter {
+  private val camera by lazy {
+    OrthographicCamera().apply { setToOrtho(false, width.toFloat(), height.toFloat()) }
+  }
+
+  private val eventScope: CoroutineScope = CoroutineScope(newAsyncContext(1, "EventPropagation"))
+  private val uiScope: CoroutineScope = CoroutineScope(Dispatchers.KTX)
+
   fun start() {
     val config =
       LwjglApplicationConfiguration().apply {
@@ -32,34 +44,16 @@ class Game(
   }
 
   override fun create() {
-    addScreen(GameScreen(this))
-    setScreen<GameScreen>()
-    super.create()
-
-    runBlocking { engine.start() }
+    KtxAsync.initiate()
+    runBlocking { withContext(KtxAsync.coroutineContext) { engine.start(eventScope, uiScope) } }
   }
 
-  private class GameScreen(val game: Game) : KtxScreen {
-    private val batch = SpriteBatch()
-    private val font = BitmapFont()
-
-    private val camera =
-      OrthographicCamera().apply { setToOrtho(false, game.width.toFloat(), game.height.toFloat()) }
-
-    override fun render(delta: Float) {
-      camera.update()
-      batch.use(camera) { stepEngine(delta) }
-    }
-
-    override fun dispose() {
-      batch.dispose()
-      font.dispose()
-    }
-
-    private fun stepEngine(delta: Float) {
-      runBlocking {
-        game.engine.update(delta.toDouble().seconds)
-        font.draw(batch, "Hello world!", 100f, 150f)
+  override fun render() {
+    camera.update()
+    runBlocking {
+      withContext(KtxAsync.coroutineContext) {
+        engine.dispatchEvent(UpdateEvent(Gdx.graphics.deltaTime.toDouble().seconds))
+        engine.dispatchEvent(LibgdxRenderEvent(camera))
       }
     }
   }

@@ -8,11 +8,12 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.cancel
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 
 inline fun <reified EventType : Event> EventStore.flowFor(): Flow<EventType> =
-  flow().filter { it is EventType }.map { it as EventType }.buffer()
+  flow().filter { it is EventType }.map { it as EventType }
 
 fun <EventType : Event> EventStore.flowFor(eventType: Class<EventType>): Flow<EventType> =
   flow()
@@ -21,7 +22,6 @@ fun <EventType : Event> EventStore.flowFor(eventType: Class<EventType>): Flow<Ev
       @Suppress("UNCHECKED_CAST") // checked by filter above
       it as EventType
     }
-    .buffer()
 
 fun <EventType : Event> EventStore.flowFor(eventType: KClass<EventType>): Flow<EventType> =
   flowFor(eventType.java)

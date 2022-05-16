@@ -27,4 +27,3 @@ fun <EventType : Event> EventStore.flowFor(key: Key<EventType>): Flow<EventType>
       @Suppress("UNCHECKED_CAST") // checked using key above
       it as EventType
     }
-    .buffer()

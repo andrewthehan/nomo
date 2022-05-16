@@ -10,14 +10,14 @@ interface VelocityComponent : Component, Exclusive
 
 // delegate's member and interface's hidden member are the same
 @Suppress("DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE")
-class Velocity2dComponent(x: Float = 0F, y: Float = 0F) :
+class Velocity2dComponent(x: Float = 0f, y: Float = 0f) :
   VelocityComponent, MutableVector2f by mutableVectorOf(x, y) {
   override fun toString() = "${Velocity2dComponent::class.simpleName}(x=$x,y=$y)"
 }
 
 // delegate's member and interface's hidden member are the same
 @Suppress("DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE")
-class Velocity3dComponent(x: Float = 0F, y: Float = 0F, z: Float = 0F) :
+class Velocity3dComponent(x: Float = 0f, y: Float = 0f, z: Float = 0f) :
   VelocityComponent, MutableVector3f by mutableVectorOf(x, y, z) {
   override fun toString() = "${Velocity3dComponent::class.simpleName}(x=$x,y=$y,z=$z)"
 }

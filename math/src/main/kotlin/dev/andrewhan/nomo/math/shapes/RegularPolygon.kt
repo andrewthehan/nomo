@@ -18,7 +18,7 @@ open class RegularPolygon : Shape {
   override val points: List<Vector2f>
   override val center: Vector2f
 
-  val radius: Float
+  open val radius: Float
 
   constructor(center: Vector2f, radius: Float, n: Int) {
     this.points = rootsOfUnity(n).map { point -> point * radius + center }
