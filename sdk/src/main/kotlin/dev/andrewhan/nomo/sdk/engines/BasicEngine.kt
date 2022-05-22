@@ -4,78 +4,141 @@ import com.google.inject.AbstractModule
 import com.google.inject.Guice
 import com.google.inject.Injector
 import com.google.inject.Key
-import com.google.inject.Provides
 import dev.andrewhan.nomo.core.Event
-import dev.andrewhan.nomo.core.System
-import dev.andrewhan.nomo.sdk.events.RenderEvent
-import dev.andrewhan.nomo.sdk.events.StartEvent
 import dev.andrewhan.nomo.sdk.stores.EntityComponentStore
 import dev.andrewhan.nomo.sdk.stores.EventStore
 import dev.andrewhan.nomo.sdk.stores.NomoEntityComponentStore
 import dev.andrewhan.nomo.sdk.stores.NomoEventStore
+import dev.andrewhan.nomo.sdk.systems.NomoSystem
 import dev.andrewhan.nomo.sdk.util.DirectedGraph
 import dev.andrewhan.nomo.sdk.util.getTopologicalSort
+import java.util.concurrent.CountDownLatch
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.merge
-import javax.inject.Singleton
-import kotlin.reflect.KClass
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withContext
 
-fun basicEngine(builder: BasicEngineBuilder.() -> Unit): NomoEngine =
-  BasicEngineBuilder().apply(builder).build()
+private typealias NonGenericSystemKey = Key<NomoSystem<Event>>
 
-class BasicEngineBuilder internal constructor() : AbstractModule(), EngineBuilder {
-  val systemOrder: DirectedGraph<SystemMetadata<Event, System<Event>>> = DirectedGraph()
-  val systemMetadataMap: MutableMap<Key<System<Event>>, SystemMetadata<Event, System<Event>>> =
+private typealias NonGenericSystem = NomoSystem<Event>
+
+private typealias NonGenericSystemMetadata = SystemMetadata<Event, NomoSystem<Event>>
+
+@Suppress("UNCHECKED_CAST")
+fun <EventType : Event, SystemType : NomoSystem<EventType>, KeyType : Key<SystemType>> KeyType
+  .eraseGenericType(): NonGenericSystemKey = this as NonGenericSystemKey
+
+@Suppress("UNCHECKED_CAST")
+fun <
+  EventType : Event,
+  SystemType : NomoSystem<EventType>,
+  SystemMetadataType : SystemMetadata<EventType, SystemType>
+> SystemMetadataType.eraseGenericType(): NonGenericSystemMetadata = this as NonGenericSystemMetadata
+
+fun basicEngine(
+  defaultScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
+  builder: BasicEngineBuilder.() -> Unit
+): NomoEngine {
+  return BasicEngineBuilder(defaultScope).apply(builder).build()
+}
+
+class BasicEngineBuilder(val defaultScope: CoroutineScope) {
+  val systemOrder: DirectedGraph<NonGenericSystemMetadata> = DirectedGraph()
+  val systemMetadataMap: MutableMap<Key<NonGenericSystem>, NonGenericSystemMetadata> =
     mutableMapOf()
 
   val constantBindings: MutableMap<Key<Any>, Any> = mutableMapOf()
 
-  override fun configure() {
-    systemMetadataMap.values.forEach { bind(it.systemKey).asEagerSingleton() }
-    constantBindings.forEach { bind(it.key).toInstance(it.value) }
-  }
+  class EventSubscriptionBuilder<EventType : Event>(
+    val systemOrder: DirectedGraph<NonGenericSystemMetadata>,
+    val systemMetadataMap: MutableMap<Key<NonGenericSystem>, NonGenericSystemMetadata>,
+    val scope: CoroutineScope
+  ) {
+    inline fun <reified SystemType : NomoSystem<EventType>> run():
+      SystemMetadata<EventType, SystemType> {
+      val systemKey = systemKey<SystemType>()
+      val metadata = SystemMetadata(systemKey, scope)
 
-  @Provides
-  @Singleton
-  private fun providesEngine(injector: Injector): NomoEngine = BasicEngine(injector, systemOrder)
+      systemOrder.addNode(metadata.eraseGenericType())
+      systemMetadataMap[systemKey.eraseGenericType()] = metadata.eraseGenericType()
 
-  inline fun <reified SystemType : System<*>> add() {
-    val systemKey = systemKey<SystemType>()
-    val systemMetadata = SystemMetadata(systemKey)
-    systemOrder.addNode(systemMetadata)
-    systemMetadataMap[systemKey] = systemMetadata
-  }
-
-  inline fun <
-    EventType : Event, reified A : System<EventType>, reified B : System<EventType>> order() {
-    systemOrder.addEdge(systemMetadataMap[systemKey<A>()]!!, systemMetadataMap[systemKey<B>()]!!)
-  }
-
-  inline fun <reified T> bindConstant(annotation: KClass<out Annotation>, constant: T) {
-    @Suppress("UNCHECKED_CAST") // T is Any
-    val key = key<T>(annotation) as Key<Any>
-    check(!constantBindings.contains(key)) {
-      "A constant is already bound to @${annotation.simpleName} ${T::class.simpleName}."
+      return metadata
     }
-    constantBindings[key] = constant as Any
+
+    infix fun <
+      SystemA : NomoSystem<EventType>,
+      SystemB : NomoSystem<EventType>,
+      A : SystemMetadata<EventType, SystemA>,
+      B : SystemMetadata<EventType, SystemB>
+    > A.then(other: B): B {
+      systemOrder.addEdge(this.eraseGenericType(), other.eraseGenericType())
+      return other
+    }
   }
 
-  override fun build(): NomoEngine {
-    val injector = Guice.createInjector(this)
+  inline fun <reified EventType : Event> forEvent(
+    scope: CoroutineScope = defaultScope,
+    builder: EventSubscriptionBuilder<EventType>.() -> Unit
+  ) {
+    EventSubscriptionBuilder<EventType>(systemOrder, systemMetadataMap, scope).apply(builder)
+  }
+
+  inline fun <reified AnnotationType : Annotation, reified T> constant(valueProvider: () -> T) {
+    @Suppress("UNCHECKED_CAST") // T is Any
+    val key = key<T>(AnnotationType::class) as Key<Any>
+    check(!constantBindings.contains(key)) {
+      "A constant is already bound to @${AnnotationType::class.simpleName} ${T::class.simpleName}."
+    }
+    constantBindings[key] = valueProvider() as Any
+  }
+
+  fun build(): NomoEngine {
+    val injector =
+      Guice.createInjector(
+        object : AbstractModule() {
+          override fun configure() {
+            systemMetadataMap.values.forEach { bind(it.systemKey).asEagerSingleton() }
+            constantBindings.forEach { bind(it.key).toInstance(it.value) }
+
+            bind(key<DirectedGraph<NonGenericSystemMetadata>>()).toInstance(systemOrder)
+            bind(key<CoroutineScope>(EngineCoroutineScope::class)).toInstance(defaultScope)
+
+            bind(key<NomoEngine>()).to(key<BaseEngine>()).asEagerSingleton()
+          }
+        }
+      )
     return injector.getInstance(key<NomoEngine>())
   }
 }
 
-class BasicEngine
-internal constructor(
+class BaseEngine
+@Inject
+constructor(
   private val injector: Injector,
-  private val systemOrder: DirectedGraph<SystemMetadata<Event, System<Event>>>
+  @EngineCoroutineScope private val scope: CoroutineScope,
+  private val systemOrder: DirectedGraph<NonGenericSystemMetadata>
 ) : NomoEngine, EventStore by NomoEventStore(), EntityComponentStore by NomoEntityComponentStore() {
-  override var state: EngineState = EngineState.STARTING
+  override suspend fun start() {
+    val totalSubscriptionCount =
+      systemOrder.nodes
+        .map { systemOrder.getIncomingEdges(it) }
+        .sumOf { if (it.isNotEmpty()) it.size else 1 }
+    val latch = CountDownLatch(totalSubscriptionCount)
 
-  override suspend fun start(updateScope: CoroutineScope, renderScope: CoroutineScope) {
-    state = EngineState.RUNNING
+    systemOrder.nodes
+      .map { injector.getInstance(it.systemKey) }
+      .forEach { system ->
+        system.subscriptionCount.filter { it > 0 }.onEach { latch.countDown() }.launchIn(scope)
+      }
+    subscriptionCount
+      .filter { it > 0 }
+      .onEach { latch.countDown() }
+      .launchIn(scope)
 
     systemOrder.getTopologicalSort().forEach { metadata ->
       val system = injector.getInstance(metadata.systemKey)
@@ -83,20 +146,16 @@ internal constructor(
         systemOrder.getIncomingEdges(metadata).map { injector.getInstance(it.systemKey) }
       val flow: Flow<Event> =
         if (inputSystems.isNotEmpty()) {
-          inputSystems.map { it.flow() }.merge()
+          inputSystems.map { it.events }.merge()
         } else {
           flowFor(metadata.eventKey)
         }
-      if (RenderEvent::class.java.isAssignableFrom(metadata.eventKey.typeLiteral.rawType)) {
-        system.start(renderScope, flow)
-      } else {
-        system.start(updateScope, flow)
-      }
-    }
-    dispatchEvent(StartEvent)
-  }
 
-  override suspend fun stop() {
-    state = EngineState.STOPPED
+      system.subscribe(metadata.scope, flow)
+    }
+
+    withContext(scope.coroutineContext) { latch.await() }
+
+    systemOrder.nodes.map { injector.getInstance(it.systemKey) }.forEach { it.start() }
   }
 }

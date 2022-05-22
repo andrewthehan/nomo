@@ -14,6 +14,7 @@ import dev.andrewhan.nomo.boot.physics.components.Velocity2dComponent
 import dev.andrewhan.nomo.boot.physics.components.Velocity3dComponent
 import dev.andrewhan.nomo.core.Component
 import dev.andrewhan.nomo.math.vectors.MutableVector
+import dev.andrewhan.nomo.math.vectors.Vector
 import dev.andrewhan.nomo.math.vectors.div
 import dev.andrewhan.nomo.math.vectors.isZero
 import dev.andrewhan.nomo.math.vectors.plusAssign
@@ -21,7 +22,7 @@ import dev.andrewhan.nomo.math.vectors.set
 import dev.andrewhan.nomo.math.vectors.times
 import dev.andrewhan.nomo.sdk.engines.NomoEngine
 import dev.andrewhan.nomo.sdk.events.UpdateEvent
-import dev.andrewhan.nomo.sdk.interfaces.Exclusive
+import dev.andrewhan.nomo.sdk.components.Exclusive
 import dev.andrewhan.nomo.sdk.stores.getComponent
 import dev.andrewhan.nomo.sdk.stores.getComponents
 import dev.andrewhan.nomo.sdk.systems.NomoSystem
@@ -34,7 +35,7 @@ abstract class PhysicsStepSystem(protected val engine: NomoEngine) : NomoSystem<
   protected inline fun <reified AccelerationType, reified KineticType> computeAcceleration() where
   AccelerationType : AccelerationComponent,
   AccelerationType : MutableVector<Float>,
-  KineticType : KineticComponent<out MutableVector<Float>> {
+  KineticType : KineticComponent<out Vector<Float>> {
     engine
       .getComponents<DynamicBodyComponent>()
       .flatMap { engine[it] }

@@ -13,7 +13,11 @@ dependencies {
     implementation("com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion")
     implementation("com.badlogicgames.gdx:gdx:$gdxVersion")
 
+    implementation("com.badlogicgames.gdx:gdx-box2d:$gdxVersion")
+    implementation("com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop")
+
     implementation("io.github.libktx:ktx-app:$ktxVersion")
     implementation("io.github.libktx:ktx-async:$ktxVersion")
+    implementation("io.github.libktx:ktx-box2d:$ktxVersion")
     implementation("io.github.libktx:ktx-graphics:$ktxVersion")
 }

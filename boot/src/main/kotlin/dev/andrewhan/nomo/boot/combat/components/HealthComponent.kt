@@ -1,7 +1,7 @@
 package dev.andrewhan.nomo.boot.combat.components
 
 import dev.andrewhan.nomo.core.Component
-import dev.andrewhan.nomo.sdk.interfaces.Exclusive
+import dev.andrewhan.nomo.sdk.components.Exclusive
 import kotlin.math.max
 import kotlin.math.min
 

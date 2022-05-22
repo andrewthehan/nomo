@@ -4,7 +4,7 @@ import dev.andrewhan.nomo.core.Component
 import dev.andrewhan.nomo.math.vectors.MutableVector2f
 import dev.andrewhan.nomo.math.vectors.MutableVector3f
 import dev.andrewhan.nomo.math.vectors.mutableVectorOf
-import dev.andrewhan.nomo.sdk.interfaces.Exclusive
+import dev.andrewhan.nomo.sdk.components.Exclusive
 
 interface VelocityComponent : Component, Exclusive
 

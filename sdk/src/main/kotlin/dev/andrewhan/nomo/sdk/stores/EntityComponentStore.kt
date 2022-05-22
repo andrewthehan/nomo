@@ -5,8 +5,8 @@ import dev.andrewhan.nomo.core.Entity
 import dev.andrewhan.nomo.core.Store
 import dev.andrewhan.nomo.sdk.exceptions.ExclusiveException
 import dev.andrewhan.nomo.sdk.exceptions.PendantException
-import dev.andrewhan.nomo.sdk.interfaces.Exclusive
-import dev.andrewhan.nomo.sdk.interfaces.Pendant
+import dev.andrewhan.nomo.sdk.components.Exclusive
+import dev.andrewhan.nomo.sdk.components.Pendant
 import dev.andrewhan.nomo.sdk.util.IdentityBiMultiMap
 import dev.andrewhan.nomo.sdk.util.IdentityMultiMap
 import kotlin.reflect.KClass

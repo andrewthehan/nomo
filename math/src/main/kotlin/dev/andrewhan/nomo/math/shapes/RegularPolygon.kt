@@ -25,4 +25,8 @@ open class RegularPolygon : Shape {
     this.center = center
     this.radius = radius
   }
+
+  override fun toString(): String {
+    return "${RegularPolygon::class.simpleName}(points=$points,center=$center)"
+  }
 }
