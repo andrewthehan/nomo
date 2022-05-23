@@ -3,7 +3,7 @@ package dev.andrewhan.nomo.integration.libgdx.physics
 import com.badlogic.gdx.physics.box2d.Body
 import com.badlogic.gdx.physics.box2d.World
 import com.badlogic.gdx.utils.Array
-import dev.andrewhan.nomo.integration.libgdx.physics.components.WorldBodyComponent
+import dev.andrewhan.nomo.integration.libgdx.physics.components.BodyComponent
 
 val World.allBodies: Set<Body>
   get() {
@@ -12,8 +12,8 @@ val World.allBodies: Set<Body>
     return bodies.toSet()
   }
 
-var Body.component: WorldBodyComponent
-  get() = userData as WorldBodyComponent
+var Body.component: BodyComponent
+  get() = userData as BodyComponent
   set(value) {
     userData = value
   }

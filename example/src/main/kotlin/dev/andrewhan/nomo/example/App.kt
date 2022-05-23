@@ -11,12 +11,11 @@ import dev.andrewhan.nomo.integration.libgdx.game
 import dev.andrewhan.nomo.integration.libgdx.io.systems.IOPlugin
 import dev.andrewhan.nomo.integration.libgdx.physics.Direction
 import dev.andrewhan.nomo.integration.libgdx.physics.component
-import dev.andrewhan.nomo.integration.libgdx.physics.components.WorldBodyComponent
-import dev.andrewhan.nomo.integration.libgdx.physics.components.WorldComponent
+import dev.andrewhan.nomo.integration.libgdx.physics.components.BodyComponent
 import dev.andrewhan.nomo.integration.libgdx.physics.createSafeWorld
 import dev.andrewhan.nomo.integration.libgdx.physics.events.ForceEvent
 import dev.andrewhan.nomo.integration.libgdx.physics.events.StartCollisionEvent
-import dev.andrewhan.nomo.integration.libgdx.physics.systems.WorldPlugin
+import dev.andrewhan.nomo.integration.libgdx.physics.systems.PhysicsPlugin
 import dev.andrewhan.nomo.sdk.components.ComponentPackage
 import dev.andrewhan.nomo.sdk.components.Exclusive
 import dev.andrewhan.nomo.sdk.components.Pendant
@@ -69,7 +68,7 @@ fun main() {
     basicEngine(updateScope) {
       apply(CombatPlugin)
       apply(IOPlugin)
-      apply(WorldPlugin(renderScope))
+      apply(PhysicsPlugin(renderScope))
 
       //      forEvent<UpdateEvent> { run<PoisonSystem>() }
       //      forEvent<StartCollisionEvent> { run<PoisonSpreaderSystem>() }
@@ -83,11 +82,9 @@ fun main() {
 
   val world = createSafeWorld(earthGravity)
   engine.apply {
-    "world" bind WorldComponent(world)
-
     "me" bind HealthComponent(100f)
     "me" bind
-      WorldBodyComponent(world) {
+      BodyComponent(world) {
         type = BodyType.DynamicBody
         position.set(5f, 5f)
         box(width = 1f, height = 1f) {
@@ -99,7 +96,7 @@ fun main() {
     "me" bind PlayerComponent
 
     "you" bind
-      WorldBodyComponent(world) {
+      BodyComponent(world) {
         type = BodyType.DynamicBody
         position.set(5.35f, 6.00f)
         box(width = 1f, height = 1f) {
@@ -112,7 +109,7 @@ fun main() {
     "you" bind PoisonComponent(60.seconds)
 
     "who" bind
-      WorldBodyComponent(world) {
+      BodyComponent(world) {
         type = BodyType.DynamicBody
         position.set(4.6f, 6f)
         box(width = .7f, height = .7f) {
@@ -123,7 +120,7 @@ fun main() {
       }
 
     "them" bind
-      WorldBodyComponent(world) {
+      BodyComponent(world) {
         type = BodyType.DynamicBody
         position.set(4.6f, 7f)
         circle(radius = .6f) {
@@ -134,7 +131,7 @@ fun main() {
       }
 
     "other" bind
-      WorldBodyComponent(world) {
+      BodyComponent(world) {
         type = BodyType.StaticBody
         position.set(6f, 3f)
         box(
@@ -252,8 +249,8 @@ class PlayerControllerSystem @Inject constructor(private val engine: NomoEngine)
       is KeyPressEvent ->
         when (event.key) {
           Key.SPACE -> {
-            val worldBody = engine.getComponent<WorldBodyComponent>(entity)
-            engine.entity(bulletComponentPackage(worldBody))
+            val body = engine.getComponent<BodyComponent>(entity)
+            engine.entity(bulletComponentPackage(body))
           }
           else -> {}
         }
@@ -261,12 +258,12 @@ class PlayerControllerSystem @Inject constructor(private val engine: NomoEngine)
   }
 }
 
-fun bulletComponentPackage(worldBody: WorldBodyComponent): ComponentPackage {
-  val direction = Vector2(cos(worldBody.body.angle), sin(worldBody.body.angle))
+fun bulletComponentPackage(bodyComponent: BodyComponent): ComponentPackage {
+  val direction = Vector2(cos(bodyComponent.body.angle), sin(bodyComponent.body.angle))
   return ComponentPackage(
-    WorldBodyComponent(worldBody.world) {
+    BodyComponent(bodyComponent.world) {
       type = BodyType.KinematicBody
-      position.set(worldBody.body.position + direction * 1f)
+      position.set(bodyComponent.body.position + direction * 1f)
       linearVelocity.set(direction * 5f)
       box(width = .1f, height = .1f) {
         friction = 1f

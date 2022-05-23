@@ -3,8 +3,7 @@ package dev.andrewhan.nomo.integration.libgdx.physics
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.physics.box2d.Body
 import com.badlogic.gdx.physics.box2d.World
-import dev.andrewhan.nomo.integration.libgdx.physics.components.WorldBodyComponent
-import dev.andrewhan.nomo.sdk.engines.NomoEngine
+import dev.andrewhan.nomo.integration.libgdx.physics.components.BodyComponent
 import dev.andrewhan.nomo.sdk.util.SafeAccessor
 import ktx.box2d.body
 import ktx.box2d.createWorld
@@ -13,32 +12,28 @@ fun createSafeWorld(gravity: Vector2 = Vector2.Zero, allowSleep: Boolean = true)
   SafeWorld(createWorld(gravity, allowSleep))
 
 class SafeWorld internal constructor(world: World) : SafeAccessor<World>(world) {
-  private val entityBodyMap: MutableMap<WorldBodyComponent, Body> = mutableMapOf()
+  private val entityBodyMap: MutableMap<BodyComponent, Body> = mutableMapOf()
 
-  fun addBody(worldBodyComponent: WorldBodyComponent) {
+  fun addBody(bodyComponent: BodyComponent) {
     safeRun { world ->
-      worldBodyComponent.world.safeRun { assert(world == it) }
+      bodyComponent.world.safeRun { assert(world == it) }
 
-      if (entityBodyMap.contains(worldBodyComponent)) {
+      if (entityBodyMap.contains(bodyComponent)) {
         return@safeRun
       }
 
-      val body = world.body(init = worldBodyComponent.bodyDef)
-      body.component = worldBodyComponent
-      entityBodyMap[worldBodyComponent] = body
+      val body = world.body(init = bodyComponent.bodyDef)
+      body.component = bodyComponent
+      entityBodyMap[bodyComponent] = body
     }
   }
 
-  fun getBody(worldBodyComponent: WorldBodyComponent): Body {
-    return entityBodyMap[worldBodyComponent]!!
+  fun getBody(bodyComponent: BodyComponent): Body {
+    return entityBodyMap[bodyComponent]!!
   }
 
-  fun cleanBodies(engine: NomoEngine) {
-    entityBodyMap
-      .filter { (worldBodyComponent, body) -> !engine.contains(worldBodyComponent) }
-      .forEach { (worldBodyComponent, body) ->
-        entityBodyMap.remove(worldBodyComponent, body)
-        worldBodyComponent.world.safeRun { it.destroyBody(body) }
-      }
+  fun removeBody(bodyComponent: BodyComponent): Boolean {
+    bodyComponent.world.safeRun { it.destroyBody(bodyComponent.body) }
+    return entityBodyMap.remove(bodyComponent, bodyComponent.body)
   }
 }

@@ -6,7 +6,7 @@ import dev.andrewhan.nomo.sdk.components.Exclusive
 import dev.andrewhan.nomo.sdk.components.Pendant
 import ktx.box2d.BodyDefinition
 
-class WorldBodyComponent(val world: SafeWorld, val bodyDef: BodyDefinition.() -> Unit) :
+class BodyComponent(val world: SafeWorld, val bodyDef: BodyDefinition.() -> Unit) :
   Component, Exclusive, Pendant {
   val body
     get() = world.getBody(this)
