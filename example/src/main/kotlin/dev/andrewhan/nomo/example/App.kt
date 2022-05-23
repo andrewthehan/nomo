@@ -2,6 +2,7 @@ package dev.andrewhan.nomo.example
 
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.math.MathUtils
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType
 import com.badlogic.gdx.physics.box2d.Contact
 import com.badlogic.gdx.physics.box2d.ContactImpulse
@@ -54,8 +55,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import ktx.async.KTX
 import ktx.async.newAsyncContext
-import ktx.box2d.body
 import ktx.box2d.box
+import ktx.box2d.circle
 import ktx.box2d.createWorld
 import ktx.box2d.earthGravity
 import ktx.graphics.use
@@ -102,19 +103,19 @@ fun main() {
   world.setContactListener(
     object : ContactListener {
       override fun beginContact(contact: Contact) {
-//        println("beginContact: $contact")
+        //        println("beginContact: $contact")
       }
 
       override fun endContact(contact: Contact) {
-//        println("endContact: $contact")
+        //        println("endContact: $contact")
       }
 
       override fun preSolve(contact: Contact, oldManifold: Manifold) {
-//        println("preSolve: $contact")
+        //        println("preSolve: $contact")
       }
 
       override fun postSolve(contact: Contact, impulse: ContactImpulse) {
-//        println("postSolve: $contact")
+        //        println("postSolve: $contact")
       }
     }
   )
@@ -122,45 +123,58 @@ fun main() {
     "world" bind WorldComponent(world)
 
     "me" bind
-      WorldBodyComponent(
-        world,
-        world.body {
-          type = BodyType.DynamicBody
-          position.set(500f, 500f)
-          box(width = 50f, height = 50f) {
-            friction = 1f
-            density = 0.5f
-            restitution = 0.3f
-          }
+      WorldBodyComponent(world) {
+        type = BodyType.DynamicBody
+        position.set(500f, 500f)
+        box(width = 50f, height = 50f) {
+          friction = 1f
+          density = 0.5f
+          restitution = 0.3f
         }
-      )
+      }
     "me" bind PlayerComponent
 
     "you" bind
-      WorldBodyComponent(
-        world,
-        world.body {
-          type = BodyType.DynamicBody
-          position.set(525f, 600f)
-          box(width = 50f, height = 50f) {
-            friction = 1f
-            density = 0.5f
-            restitution = 0.5f
-          }
+      WorldBodyComponent(world) {
+        type = BodyType.DynamicBody
+        position.set(535f, 600f)
+        box(width = 50f, height = 50f) {
+          friction = 1f
+          density = 0.5f
+          restitution = 0.5f
         }
-      )
-    "you" bind HealthComponent(50f)
+      }
+    "you" bind HealthComponent(40f)
     "you" bind PoisonComponent(60.seconds)
 
-    "other" bind
-      WorldBodyComponent(
-        world,
-        world.body {
-          type = BodyType.StaticBody
-          position.set(600f, 100f)
-          box(width = 1000f, height = 20f)
+    "who" bind
+      WorldBodyComponent(world) {
+        type = BodyType.DynamicBody
+        position.set(460f, 600f)
+        box(width = 30f, height = 30f) {
+          friction = 1f
+          density = 0.5f
+          restitution = 0.3f
         }
-      )
+      }
+
+    "them" bind
+      WorldBodyComponent(world) {
+        type = BodyType.DynamicBody
+        position.set(460f, 700f)
+        circle(radius = 40f) {
+          friction = 1f
+          density = 0.5f
+          restitution = 1f
+        }
+      }
+
+    "other" bind
+      WorldBodyComponent(world) {
+        type = BodyType.StaticBody
+        position.set(600f, 300f)
+        box(width = 1000f, height = 20f, angle = MathUtils.degreesToRadians * -20f)
+      }
     "other" bind HealthComponent(50f)
     "other" bind ArmorComponent(.25f)
     "other" bind PoisonComponent(60.seconds)
@@ -253,7 +267,7 @@ object PlayerComponent : Component, Pendant, Exclusive {
 
 class PlayerControllerSystem @Inject constructor(private val engine: NomoEngine) :
   NomoSystem<KeyEvent>() {
-  private val speed = 100f
+  private val speed = 1000f
 
   override suspend fun handle(event: KeyEvent) {
     val entity = engine.getEntity(PlayerComponent)

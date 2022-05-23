@@ -45,6 +45,7 @@ class WorldStepSystem @Inject constructor(private val engine: NomoEngine) :
         world.allBodies
           .filter { !engine.contains(it.entity) }
           .forEach { synchronized(world) { world.destroyBody(it) } }
+
         @OptIn(ExperimentalTime::class)
         world.step(event.elapsed.toFloat(DurationUnit.SECONDS), 6, 2)
       }
