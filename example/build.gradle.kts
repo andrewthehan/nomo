@@ -4,7 +4,7 @@ val gdxVersion = "1.10.0"
 val ktxVersion = "1.10.0-rc1"
 
 dependencies {
-  implementation(project(":boot"))
+  implementation(project(":boot:combat"))
   implementation(project(":core"))
   implementation(project(":integrations:libgdx"))
   implementation(project(":sdk"))
