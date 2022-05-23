@@ -12,7 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 fun WorldPlugin(renderScope: CoroutineScope): EnginePlugin = {
   forEvent<UpdateEvent> { run<WorldStepSystem>() }
   forEvent<RenderEvent>(renderScope) { run<ClearRenderSystem>() then run<WorldRenderSystem>() }
-  forEvent<ComponentAddedEvent> { run<WorldCollisionSystem>() }
 
   forEvent<ForceEvent> { run<ForceApplicationSystem>() }
+  forEvent<ComponentAddedEvent> { run<WorldCollisionSystem>() }
 }

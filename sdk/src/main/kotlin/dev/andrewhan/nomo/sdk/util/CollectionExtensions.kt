@@ -10,4 +10,6 @@ fun <T> emptyMutableIdentitySet(): MutableSet<T> =
   Collections.synchronizedSet(Collections.newSetFromMap(IdentityHashMap()))
 
 fun <T> Iterable<T>.toIdentitySet(): Set<T> =
-  toCollection(Collections.synchronizedSet(Collections.newSetFromMap(IdentityHashMap())))
+  synchronized(this) {
+    toCollection(Collections.synchronizedSet(Collections.newSetFromMap(IdentityHashMap())))
+  }

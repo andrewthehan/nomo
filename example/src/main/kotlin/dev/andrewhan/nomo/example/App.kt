@@ -1,36 +1,39 @@
 package dev.andrewhan.nomo.example
 
+import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType
 import dev.andrewhan.nomo.boot.combat.components.ArmorComponent
 import dev.andrewhan.nomo.boot.combat.components.HealthComponent
 import dev.andrewhan.nomo.boot.combat.events.DamageEvent
-import dev.andrewhan.nomo.boot.combat.events.DeathEvent
-import dev.andrewhan.nomo.boot.combat.systems.ArmorSystem
-import dev.andrewhan.nomo.boot.combat.systems.DamageSystem
-import dev.andrewhan.nomo.boot.combat.systems.RemoveOnDeathSystem
-import dev.andrewhan.nomo.boot.combat.systems.ShieldSystem
+import dev.andrewhan.nomo.boot.combat.systems.CombatPlugin
 import dev.andrewhan.nomo.core.Component
-import dev.andrewhan.nomo.integration.libgdx.Game
+import dev.andrewhan.nomo.integration.libgdx.game
 import dev.andrewhan.nomo.integration.libgdx.io.systems.IOPlugin
 import dev.andrewhan.nomo.integration.libgdx.physics.Direction
+import dev.andrewhan.nomo.integration.libgdx.physics.component
 import dev.andrewhan.nomo.integration.libgdx.physics.components.WorldBodyComponent
 import dev.andrewhan.nomo.integration.libgdx.physics.components.WorldComponent
+import dev.andrewhan.nomo.integration.libgdx.physics.createSafeWorld
 import dev.andrewhan.nomo.integration.libgdx.physics.events.ForceEvent
 import dev.andrewhan.nomo.integration.libgdx.physics.events.StartCollisionEvent
 import dev.andrewhan.nomo.integration.libgdx.physics.systems.WorldPlugin
+import dev.andrewhan.nomo.sdk.components.ComponentPackage
 import dev.andrewhan.nomo.sdk.components.Exclusive
 import dev.andrewhan.nomo.sdk.components.Pendant
-import dev.andrewhan.nomo.sdk.engines.EnginePlugin
 import dev.andrewhan.nomo.sdk.engines.NomoEngine
 import dev.andrewhan.nomo.sdk.engines.TimeStep
 import dev.andrewhan.nomo.sdk.engines.basicEngine
+import dev.andrewhan.nomo.sdk.entities.entity
 import dev.andrewhan.nomo.sdk.events.ComponentRemovedEvent
 import dev.andrewhan.nomo.sdk.events.KeyEvent
 import dev.andrewhan.nomo.sdk.events.KeyHoldEvent
+import dev.andrewhan.nomo.sdk.events.KeyPressEvent
 import dev.andrewhan.nomo.sdk.events.UpdateEvent
 import dev.andrewhan.nomo.sdk.io.Key
+import dev.andrewhan.nomo.sdk.stores.getComponent
 import dev.andrewhan.nomo.sdk.stores.getComponentOrNull
 import dev.andrewhan.nomo.sdk.stores.getComponents
+import dev.andrewhan.nomo.sdk.stores.getEntity
 import dev.andrewhan.nomo.sdk.stores.getEntityOrNull
 import dev.andrewhan.nomo.sdk.systems.NomoSystem
 import dev.andrewhan.nomo.sdk.util.isZero
@@ -43,21 +46,19 @@ import ktx.async.KTX
 import ktx.async.newAsyncContext
 import ktx.box2d.box
 import ktx.box2d.circle
-import ktx.box2d.createWorld
 import ktx.box2d.earthGravity
+import ktx.math.plus
 import ktx.math.times
 import javax.inject.Inject
 import javax.inject.Qualifier
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.system.exitProcess
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
-
-val CombatPlugin: EnginePlugin = {
-  forEvent<DamageEvent> { run<ShieldSystem>() then run<ArmorSystem>() then run<DamageSystem>() }
-}
 
 @OptIn(ExperimentalTime::class)
 fun main() {
@@ -70,23 +71,17 @@ fun main() {
       apply(IOPlugin)
       apply(WorldPlugin(renderScope))
 
-      forEvent<UpdateEvent> { run<PoisonSystem>() }
-      forEvent<StartCollisionEvent> { run<PoisonSpreaderSystem>() }
+      //      forEvent<UpdateEvent> { run<PoisonSystem>() }
+      //      forEvent<StartCollisionEvent> { run<PoisonSpreaderSystem>() }
+
       forEvent<KeyEvent> { run<PlayerControllerSystem>() }
-      forEvent<DeathEvent> { run<RemoveOnDeathSystem>() }
       forEvent<ComponentRemovedEvent> { run<ShutdownSystem>() }
-      //      forEvent<RenderEvent>(renderScope) {
-      //        run<ClearRenderSystem>().apply {
-      //          this then run<DebugRenderSystem>()
-      //          this then run<DeathLogSystem>()
-      //        }
-      //      }
 
       constant<TimeStep, Duration> { 1.seconds / 300 }
       constant<Poison, Float> { 10f }
     }
 
-  val world = createWorld(earthGravity)
+  val world = createSafeWorld(earthGravity)
   engine.apply {
     "world" bind WorldComponent(world)
 
@@ -153,7 +148,7 @@ fun main() {
     "other" bind PoisonComponent(60.seconds)
   }
 
-  Game("Game", 1366, 768, engine).start()
+  game(engine) { worldScale = 0.01f }.start()
 }
 
 // class DeathLogSystem
@@ -254,15 +249,42 @@ class PlayerControllerSystem @Inject constructor(private val engine: NomoEngine)
           Key.RIGHT -> engine.dispatchEvent(ForceEvent(Direction.RIGHT * speed, entity))
           else -> {}
         }
+      is KeyPressEvent ->
+        when (event.key) {
+          Key.SPACE -> {
+            val worldBody = engine.getComponent<WorldBodyComponent>(entity)
+            engine.entity(bulletComponentPackage(worldBody))
+          }
+          else -> {}
+        }
     }
   }
+}
+
+fun bulletComponentPackage(worldBody: WorldBodyComponent): ComponentPackage {
+  val direction = Vector2(cos(worldBody.body.angle), sin(worldBody.body.angle))
+  return ComponentPackage(
+    WorldBodyComponent(worldBody.world) {
+      type = BodyType.KinematicBody
+      position.set(worldBody.body.position + direction * 1f)
+      linearVelocity.set(direction * 5f)
+      box(width = .1f, height = .1f) {
+        friction = 1f
+        density = 1f
+        restitution = 1f
+      }
+    }
+  )
 }
 
 class PoisonSpreaderSystem @Inject constructor(private val engine: NomoEngine) :
   NomoSystem<StartCollisionEvent>() {
   @OptIn(ExperimentalTime::class)
   override suspend fun handle(event: StartCollisionEvent) {
-    val (world, entityA, entityB) = event
+    val (world, contact) = event
+    val entityA = engine.getEntity(contact.fixtureA.body.component)
+    val entityB = engine.getEntity(contact.fixtureB.body.component)
+
     val poisonA = engine.getComponentOrNull<PoisonComponent>(entityA)
     val poisonB = engine.getComponentOrNull<PoisonComponent>(entityB)
 

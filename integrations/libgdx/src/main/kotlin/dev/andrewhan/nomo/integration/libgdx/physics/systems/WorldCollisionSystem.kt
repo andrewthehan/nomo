@@ -6,7 +6,6 @@ import com.badlogic.gdx.physics.box2d.ContactListener
 import com.badlogic.gdx.physics.box2d.Manifold
 import dev.andrewhan.nomo.core.Event
 import dev.andrewhan.nomo.integration.libgdx.physics.components.WorldComponent
-import dev.andrewhan.nomo.integration.libgdx.physics.entity
 import dev.andrewhan.nomo.integration.libgdx.physics.events.EndCollisionEvent
 import dev.andrewhan.nomo.integration.libgdx.physics.events.StartCollisionEvent
 import dev.andrewhan.nomo.sdk.engines.EngineCoroutineScope
@@ -26,37 +25,27 @@ constructor(
   override suspend fun handle(event: ComponentAddedEvent) {
     when (val component = event.component) {
       is WorldComponent ->
-        component.world.setContactListener(
-          object : ContactListener {
-            private fun dispatch(event: Event) {
-              scope.launch { engine.dispatchEvent(event) }
+        component.world.safeRun {
+          it.setContactListener(
+            object : ContactListener {
+              private fun dispatch(event: Event) {
+                scope.launch { engine.dispatchEvent(event) }
+              }
+
+              override fun beginContact(contact: Contact) {
+                dispatch(StartCollisionEvent(component.world, contact))
+              }
+
+              override fun endContact(contact: Contact) {
+                dispatch(EndCollisionEvent(component.world, contact))
+              }
+
+              override fun preSolve(contact: Contact, oldManifold: Manifold) {}
+
+              override fun postSolve(contact: Contact, impulse: ContactImpulse) {}
             }
-
-            override fun beginContact(contact: Contact) {
-              dispatch(
-                StartCollisionEvent(
-                  component.world,
-                  contact.fixtureA.body.entity,
-                  contact.fixtureB.body.entity
-                )
-              )
-            }
-
-            override fun endContact(contact: Contact) {
-              dispatch(
-                EndCollisionEvent(
-                  component.world,
-                  contact.fixtureA.body.entity,
-                  contact.fixtureB.body.entity
-                )
-              )
-            }
-
-            override fun preSolve(contact: Contact, oldManifold: Manifold) {}
-
-            override fun postSolve(contact: Contact, impulse: ContactImpulse) {}
-          }
-        )
+          )
+        }
     }
   }
 }

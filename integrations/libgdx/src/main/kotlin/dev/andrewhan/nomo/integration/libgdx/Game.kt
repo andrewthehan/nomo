@@ -19,15 +19,33 @@ import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
-@ExperimentalTime
+fun game(engine: NomoEngine, builder: GameBuilder.() -> Unit = {}): Game {
+  return GameBuilder(engine).apply(builder).build()
+}
+
+class GameBuilder(private val engine: NomoEngine) {
+  var title: String = "Game"
+  var width: Int = 1366
+  var height: Int = 768
+  var worldScale: Float = 1f
+
+  fun build(): Game {
+    return Game(title, width, height, worldScale, engine)
+  }
+}
+
+@OptIn(ExperimentalTime::class)
 class Game(
   private val title: String,
   private val width: Int,
   private val height: Int,
+  private val worldScale: Float,
   private val engine: NomoEngine
 ) : KtxApplicationAdapter, KtxInputAdapter {
   private val camera by lazy {
-    OrthographicCamera().apply { setToOrtho(false, width.toFloat() / 100, height.toFloat() / 100f) }
+    OrthographicCamera().apply {
+      setToOrtho(false, width.toFloat() * worldScale, height.toFloat() * worldScale)
+    }
   }
 
   private val timeStep: Duration = engine.getInstance(key<Duration>(TimeStep::class))

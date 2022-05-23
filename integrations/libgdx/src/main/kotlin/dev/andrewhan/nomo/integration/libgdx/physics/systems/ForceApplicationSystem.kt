@@ -10,7 +10,7 @@ import javax.inject.Inject
 class ForceApplicationSystem @Inject constructor(private val engine: NomoEngine) :
   NomoSystem<ForceEvent>() {
   override suspend fun handle(event: ForceEvent) {
-    val body = engine.getComponent<WorldBodyComponent>(event.entity).body
-    body.applyForceToCenter(event.newtons, true)
+    val worldBodyComponent = engine.getComponent<WorldBodyComponent>(event.entity)
+    worldBodyComponent.body.applyForceToCenter(event.newtons, true)
   }
 }

@@ -14,7 +14,7 @@ class WorldRenderSystem @Inject constructor(private val engine: NomoEngine) :
 
   override suspend fun handle(event: RenderEvent) {
     engine.getComponents<WorldComponent>().forEach {
-      synchronized(it.world) { debugRenderer.render(it.world, event.camera.combined) }
+      it.world.safeRun { world -> debugRenderer.render(world, event.camera.combined) }
     }
   }
 }
