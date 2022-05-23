@@ -1,6 +1,6 @@
-package dev.andrewhan.nomo.integration.libgdx.systems
+package dev.andrewhan.nomo.integration.libgdx.render.systems
 
-import dev.andrewhan.nomo.integration.libgdx.events.RenderEvent
+import dev.andrewhan.nomo.integration.libgdx.render.events.RenderEvent
 import dev.andrewhan.nomo.sdk.systems.NomoSystem
 import ktx.app.clearScreen
 

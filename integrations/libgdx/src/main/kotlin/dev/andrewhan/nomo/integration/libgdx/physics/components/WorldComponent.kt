@@ -1,4 +1,4 @@
-package dev.andrewhan.nomo.integration.libgdx.components
+package dev.andrewhan.nomo.integration.libgdx.physics.components
 
 import com.badlogic.gdx.physics.box2d.World
 import dev.andrewhan.nomo.core.Component

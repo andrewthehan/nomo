@@ -4,7 +4,11 @@ import com.google.inject.AbstractModule
 import com.google.inject.Guice
 import com.google.inject.Injector
 import com.google.inject.Key
+import dev.andrewhan.nomo.core.Component
+import dev.andrewhan.nomo.core.Entity
 import dev.andrewhan.nomo.core.Event
+import dev.andrewhan.nomo.sdk.events.ComponentAddedEvent
+import dev.andrewhan.nomo.sdk.events.ComponentRemovedEvent
 import dev.andrewhan.nomo.sdk.stores.EntityComponentStore
 import dev.andrewhan.nomo.sdk.stores.EventStore
 import dev.andrewhan.nomo.sdk.stores.NomoEntityComponentStore
@@ -19,6 +23,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.CountDownLatch
 import javax.inject.Inject
@@ -108,6 +113,9 @@ class BasicEngineBuilder(val defaultScope: CoroutineScope) {
             bind(key<DirectedGraph<NonGenericSystemMetadata>>()).toInstance(systemOrder)
             bind(key<CoroutineScope>(EngineCoroutineScope::class)).toInstance(defaultScope)
 
+            bind(key<EventStore>()).toInstance(NomoEventStore())
+            bind(key<EntityComponentStore>()).toInstance(NomoEntityComponentStore())
+
             bind(key<NomoEngine>()).to(key<BaseEngine>()).asEagerSingleton()
           }
         }
@@ -121,12 +129,37 @@ class BaseEngine
 constructor(
   injector: Injector,
   @EngineCoroutineScope private val scope: CoroutineScope,
-  private val systemOrder: DirectedGraph<NonGenericSystemMetadata>
+  private val systemOrder: DirectedGraph<NonGenericSystemMetadata>,
+  private val eventStore: EventStore,
+  private val entityComponentStore: EntityComponentStore
 ) :
   NomoEngine,
   Injector by injector,
-  EventStore by NomoEventStore(),
-  EntityComponentStore by NomoEntityComponentStore() {
+  EventStore by eventStore,
+  EntityComponentStore by entityComponentStore {
+  override fun add(entity: Entity, component: Component) {
+    entityComponentStore.add(entity, component)
+    scope.launch { dispatchEvent(ComponentAddedEvent(component)) }
+  }
+
+  override fun remove(component: Component): Set<Entity> {
+    return entityComponentStore.remove(component).also {
+      scope.launch { dispatchEvent(ComponentRemovedEvent(component)) }
+    }
+  }
+
+  override fun remove(entity: Entity): Set<Component> {
+    return entityComponentStore.remove(entity).also { removedComponents ->
+      scope.launch { removedComponents.forEach { dispatchEvent(ComponentRemovedEvent(it)) } }
+    }
+  }
+
+  override fun remove(entity: Entity, component: Component): Boolean {
+    return entityComponentStore.remove(entity, component).also {
+      scope.launch { dispatchEvent(ComponentRemovedEvent(component)) }
+    }
+  }
+
   override suspend fun start() {
     val totalSubscriptionCount =
       systemOrder.nodes

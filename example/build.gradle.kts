@@ -23,6 +23,7 @@ dependencies {
   implementation("io.github.libktx:ktx-async:$ktxVersion")
   implementation("io.github.libktx:ktx-box2d:$ktxVersion")
   implementation("io.github.libktx:ktx-graphics:$ktxVersion")
+  implementation("io.github.libktx:ktx-math:$ktxVersion")
 }
 
 application { mainClass.set("dev.andrewhan.nomo.example.AppKt") }
