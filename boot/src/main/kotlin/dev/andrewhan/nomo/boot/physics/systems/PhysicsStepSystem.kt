@@ -44,7 +44,7 @@ abstract class PhysicsStepSystem(protected val engine: NomoEngine) : NomoSystem<
         val kinetic = engine.getComponent<KineticType>(it)
         val mass = engine.getComponent<MassComponent>(it)
 
-        acceleration.set(kinetic.netForce / mass.amount)
+        acceleration.set(kinetic.netForce / mass.mass)
         kinetic.reset()
       }
   }

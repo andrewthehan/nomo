@@ -3,10 +3,16 @@ package dev.andrewhan.nomo.boot.physics.components
 import dev.andrewhan.nomo.core.Component
 import dev.andrewhan.nomo.sdk.components.Exclusive
 
-interface BodyComponent: Component, Exclusive
+sealed interface BodyComponent : Component, Exclusive
 
-class StaticBodyComponent : BodyComponent
+object StaticBodyComponent : BodyComponent {
+  override fun toString(): String = "${this::class.simpleName}"
+}
 
-class KinematicBodyComponent : BodyComponent
+object KinematicBodyComponent : BodyComponent {
+  override fun toString(): String = "${this::class.simpleName}"
+}
 
-class DynamicBodyComponent: BodyComponent
+object DynamicBodyComponent : BodyComponent {
+  override fun toString(): String = "${this::class.simpleName}"
+}

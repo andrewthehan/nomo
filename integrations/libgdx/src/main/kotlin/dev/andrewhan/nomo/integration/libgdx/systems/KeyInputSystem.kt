@@ -10,9 +10,6 @@ import dev.andrewhan.nomo.sdk.events.KeyReleaseEvent
 import dev.andrewhan.nomo.sdk.events.UpdateEvent
 import dev.andrewhan.nomo.sdk.io.Key
 import dev.andrewhan.nomo.sdk.systems.NomoSystem
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.runBlocking
 import ktx.app.KtxInputAdapter
 import javax.inject.Inject
@@ -45,6 +42,18 @@ fun toKey(keyCode: Int): Key =
     Keys.X -> Key.X
     Keys.Y -> Key.Y
     Keys.Z -> Key.Z
+    Keys.F1 -> Key.F1
+    Keys.F2 -> Key.F2
+    Keys.F3 -> Key.F3
+    Keys.F4 -> Key.F4
+    Keys.F5 -> Key.F5
+    Keys.F6 -> Key.F6
+    Keys.F7 -> Key.F7
+    Keys.F8 -> Key.F8
+    Keys.F9 -> Key.F9
+    Keys.F10 -> Key.F10
+    Keys.F11 -> Key.F11
+    Keys.F12 -> Key.F12
     Keys.SPACE -> Key.SPACE
     Keys.CONTROL_LEFT -> Key.CONTROL_LEFT
     Keys.CONTROL_RIGHT -> Key.CONTROL_RIGHT
@@ -56,6 +65,7 @@ fun toKey(keyCode: Int): Key =
     Keys.DOWN -> Key.DOWN
     Keys.LEFT -> Key.LEFT
     Keys.RIGHT -> Key.RIGHT
+    Keys.ESCAPE -> Key.ESCAPE
     else ->
       throw UnsupportedOperationException(
         "Unsupported keyCode: ${Keys.toString(keyCode)} (${keyCode})"

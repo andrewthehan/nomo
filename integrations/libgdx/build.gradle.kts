@@ -6,6 +6,7 @@ val gdxVersion = "1.10.0"
 val ktxVersion = "1.10.0-rc1"
 
 dependencies {
+    implementation(project(":boot"))
     implementation(project(":sdk"))
 
     implementation("com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop")

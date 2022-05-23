@@ -7,4 +7,6 @@ class IdentityBiMultiMap<K, V> : BiMultiMap<K, V> {
   private constructor(reverse: IdentityBiMultiMap<V, K>) : super(reverse)
 
   override fun <K, V> newMultiMap(): MultiMap<K, V> = IdentityMultiMap()
+
+  override fun <T> Iterable<T>.toCustomSet(): Set<T> = toIdentitySet()
 }

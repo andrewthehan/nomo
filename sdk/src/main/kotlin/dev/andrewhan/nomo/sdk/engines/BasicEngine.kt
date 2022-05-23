@@ -12,8 +12,6 @@ import dev.andrewhan.nomo.sdk.stores.NomoEventStore
 import dev.andrewhan.nomo.sdk.systems.NomoSystem
 import dev.andrewhan.nomo.sdk.util.DirectedGraph
 import dev.andrewhan.nomo.sdk.util.getTopologicalSort
-import java.util.concurrent.CountDownLatch
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -22,6 +20,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
+import java.util.concurrent.CountDownLatch
+import javax.inject.Inject
 
 private typealias NonGenericSystemKey = Key<NomoSystem<Event>>
 
@@ -119,10 +119,14 @@ class BasicEngineBuilder(val defaultScope: CoroutineScope) {
 class BaseEngine
 @Inject
 constructor(
-  private val injector: Injector,
+  injector: Injector,
   @EngineCoroutineScope private val scope: CoroutineScope,
   private val systemOrder: DirectedGraph<NonGenericSystemMetadata>
-) : NomoEngine, EventStore by NomoEventStore(), EntityComponentStore by NomoEntityComponentStore() {
+) :
+  NomoEngine,
+  Injector by injector,
+  EventStore by NomoEventStore(),
+  EntityComponentStore by NomoEntityComponentStore() {
   override suspend fun start() {
     val totalSubscriptionCount =
       systemOrder.nodes
@@ -131,19 +135,15 @@ constructor(
     val latch = CountDownLatch(totalSubscriptionCount)
 
     systemOrder.nodes
-      .map { injector.getInstance(it.systemKey) }
+      .map { getInstance(it.systemKey) }
       .forEach { system ->
         system.subscriptionCount.filter { it > 0 }.onEach { latch.countDown() }.launchIn(scope)
       }
-    subscriptionCount
-      .filter { it > 0 }
-      .onEach { latch.countDown() }
-      .launchIn(scope)
+    subscriptionCount.filter { it > 0 }.onEach { latch.countDown() }.launchIn(scope)
 
     systemOrder.getTopologicalSort().forEach { metadata ->
-      val system = injector.getInstance(metadata.systemKey)
-      val inputSystems =
-        systemOrder.getIncomingEdges(metadata).map { injector.getInstance(it.systemKey) }
+      val system = getInstance(metadata.systemKey)
+      val inputSystems = systemOrder.getIncomingEdges(metadata).map { getInstance(it.systemKey) }
       val flow: Flow<Event> =
         if (inputSystems.isNotEmpty()) {
           inputSystems.map { it.events }.merge()
@@ -156,6 +156,6 @@ constructor(
 
     withContext(scope.coroutineContext) { latch.await() }
 
-    systemOrder.nodes.map { injector.getInstance(it.systemKey) }.forEach { it.start() }
+    systemOrder.nodes.map { getInstance(it.systemKey) }.forEach { it.start() }
   }
 }

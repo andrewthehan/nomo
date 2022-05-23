@@ -9,7 +9,6 @@ import dev.andrewhan.nomo.sdk.systems.NomoSystem
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 
-@ExperimentalTime
 class WorldRenderSystem @Inject constructor(private val engine: NomoEngine) :
   NomoSystem<RenderEvent>() {
   private val debugRenderer by lazy { Box2DDebugRenderer() }

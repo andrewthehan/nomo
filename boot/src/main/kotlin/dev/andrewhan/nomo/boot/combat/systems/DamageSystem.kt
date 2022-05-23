@@ -10,10 +10,14 @@ import javax.inject.Inject
 
 class DamageSystem @Inject constructor(private val engine: NomoEngine) : NomoSystem<DamageEvent>() {
   override suspend fun handle(event: DamageEvent) {
-    engine.getComponentOrNull<HealthComponent>(event.entity)?.let {
-      it.damage(event.amount)
+    engine.getComponentOrNull<HealthComponent>(event.entity)?.apply {
+      if (isDead) {
+        return
+      }
 
-      if (it.isDead) {
+      damage(event.amount)
+
+      if (isDead) {
         engine.dispatchEvent(DeathEvent(event.entity))
       }
     }

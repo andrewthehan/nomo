@@ -24,8 +24,12 @@ interface KineticComponent<VectorType : Vector<Float>> : Component, Exclusive {
 
 class Kinetic2dComponent : KineticComponent<Vector2f> {
   override var netForce: Vector2f = zeroVector2f()
+
+  override fun toString(): String = "${this::class.simpleName}(netForce=$netForce)"
 }
 
 class Kinetic3dComponent : KineticComponent<Vector3f> {
   override var netForce: Vector3f = zeroVector3f()
+
+  override fun toString(): String = "${this::class.simpleName}(netForce=$netForce)"
 }

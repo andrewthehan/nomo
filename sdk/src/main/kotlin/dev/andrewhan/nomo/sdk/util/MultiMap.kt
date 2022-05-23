@@ -9,6 +9,8 @@ abstract class MultiMap<K, V> {
 
   abstract fun newValueSet(): MutableSet<V>
 
+  abstract fun <T> Iterable<T>.toCustomSet(): Set<T>
+
   val entries: Set<Map.Entry<K, Set<V>>>
     get() = map.entries
   val keys: Set<K>
@@ -28,8 +30,8 @@ abstract class MultiMap<K, V> {
 
   fun containsValue(value: V): Boolean = map.values.any { it.contains(value) }
 
-  // call toSet() to return a separate instance to avoid concurrent modification issues
-  operator fun get(key: K): Set<V> = map[key]?.toSet() ?: setOf()
+  // call toCustomSet() to return a separate instance to avoid concurrent modification issues
+  operator fun get(key: K): Set<V> = map[key]?.toCustomSet() ?: newValueSet()
 
   fun put(key: K, value: V) {
     synchronized(this) {
@@ -39,7 +41,7 @@ abstract class MultiMap<K, V> {
     }
   }
 
-  fun remove(key: K): Set<V> = map.remove(key) ?: setOf()
+  fun remove(key: K): Set<V> = map.remove(key) ?: newValueSet()
 
   fun remove(key: K, value: V): Boolean {
     synchronized(this) {

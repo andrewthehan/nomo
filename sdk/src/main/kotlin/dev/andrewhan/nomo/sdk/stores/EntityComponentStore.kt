@@ -3,17 +3,18 @@ package dev.andrewhan.nomo.sdk.stores
 import dev.andrewhan.nomo.core.Component
 import dev.andrewhan.nomo.core.Entity
 import dev.andrewhan.nomo.core.Store
-import dev.andrewhan.nomo.sdk.exceptions.ExclusiveException
-import dev.andrewhan.nomo.sdk.exceptions.PendantException
 import dev.andrewhan.nomo.sdk.components.Exclusive
 import dev.andrewhan.nomo.sdk.components.Pendant
+import dev.andrewhan.nomo.sdk.exceptions.ExclusiveException
+import dev.andrewhan.nomo.sdk.exceptions.PendantException
 import dev.andrewhan.nomo.sdk.util.IdentityBiMultiMap
 import dev.andrewhan.nomo.sdk.util.IdentityMultiMap
+import dev.andrewhan.nomo.sdk.util.toIdentitySet
 import kotlin.reflect.KClass
 
 inline fun <reified ComponentType : Component> EntityComponentStore.getComponents(
   entity: Entity
-): Set<ComponentType> = this[entity].filterIsInstance<ComponentType>().toSet()
+): Set<ComponentType> = this[entity].filterIsInstance<ComponentType>().toIdentitySet()
 
 inline fun <reified ComponentType : Component> EntityComponentStore.getComponents():
   Set<ComponentType> = getComponents(ComponentType::class)
@@ -55,6 +56,8 @@ interface EntityComponentStore : Store {
   ): Set<ComponentType>
 
   fun <ComponentType : Component> getEntities(componentType: KClass<ComponentType>): Set<Entity>
+
+  fun contains(entity: Entity): Boolean
 
   fun contains(component: Component): Boolean
 
@@ -109,6 +112,8 @@ internal class NomoEntityComponentStore : EntityComponentStore {
   override fun <ComponentType : Component> getEntities(
     componentType: KClass<ComponentType>
   ): Set<Entity> = getComponents(componentType).map(this::get).flatten().distinct().toSet()
+
+  override fun contains(entity: Entity): Boolean = entitiesToComponentsMap.containsKey(entity)
 
   override fun contains(component: Component): Boolean =
     entitiesToComponentsMap.containsValue(component)

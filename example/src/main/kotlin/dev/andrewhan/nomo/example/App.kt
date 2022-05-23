@@ -2,61 +2,63 @@ package dev.andrewhan.nomo.example
 
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer
+import com.badlogic.gdx.physics.box2d.BodyDef.BodyType
+import com.badlogic.gdx.physics.box2d.Contact
+import com.badlogic.gdx.physics.box2d.ContactImpulse
+import com.badlogic.gdx.physics.box2d.ContactListener
+import com.badlogic.gdx.physics.box2d.Manifold
 import dev.andrewhan.nomo.boot.combat.components.ArmorComponent
 import dev.andrewhan.nomo.boot.combat.components.HealthComponent
 import dev.andrewhan.nomo.boot.combat.events.DamageEvent
 import dev.andrewhan.nomo.boot.combat.events.DeathEvent
 import dev.andrewhan.nomo.boot.combat.systems.ArmorSystem
 import dev.andrewhan.nomo.boot.combat.systems.DamageSystem
-import dev.andrewhan.nomo.boot.combat.systems.DeathSystem
+import dev.andrewhan.nomo.boot.combat.systems.RemoveOnDeathSystem
 import dev.andrewhan.nomo.boot.combat.systems.ShieldSystem
-import dev.andrewhan.nomo.boot.physics.components.DynamicBodyComponent
-import dev.andrewhan.nomo.boot.physics.components.Kinetic2dComponent
-import dev.andrewhan.nomo.boot.physics.components.MassComponent
-import dev.andrewhan.nomo.boot.physics.components.Position2dComponent
-import dev.andrewhan.nomo.boot.physics.components.ShapeComponent
 import dev.andrewhan.nomo.boot.physics.events.Force2dEvent
-import dev.andrewhan.nomo.boot.physics.packages.kinematic2dComponentPackage
-import dev.andrewhan.nomo.boot.physics.systems.Physics2dStepSystem
 import dev.andrewhan.nomo.core.Component
 import dev.andrewhan.nomo.core.Entity
 import dev.andrewhan.nomo.integration.libgdx.Game
+import dev.andrewhan.nomo.integration.libgdx.components.WorldBodyComponent
 import dev.andrewhan.nomo.integration.libgdx.components.WorldComponent
 import dev.andrewhan.nomo.integration.libgdx.events.RenderEvent
 import dev.andrewhan.nomo.integration.libgdx.systems.ClearRenderSystem
 import dev.andrewhan.nomo.integration.libgdx.systems.KeyInputSystem
-import dev.andrewhan.nomo.integration.libgdx.systems.WorldRenderSystem
-import dev.andrewhan.nomo.integration.libgdx.systems.WorldStepSystem
-import dev.andrewhan.nomo.math.shapes.Circle
-import dev.andrewhan.nomo.math.shapes.Rectangle
-import dev.andrewhan.nomo.math.shapes.RegularPolygon
+import dev.andrewhan.nomo.integration.libgdx.systems.WorldPlugin
 import dev.andrewhan.nomo.math.vectors.DOWN
 import dev.andrewhan.nomo.math.vectors.LEFT
 import dev.andrewhan.nomo.math.vectors.RIGHT
 import dev.andrewhan.nomo.math.vectors.UP
-import dev.andrewhan.nomo.math.vectors.plus
 import dev.andrewhan.nomo.math.vectors.times
-import dev.andrewhan.nomo.math.vectors.zeroVector2f
 import dev.andrewhan.nomo.sdk.components.Exclusive
 import dev.andrewhan.nomo.sdk.components.Pendant
 import dev.andrewhan.nomo.sdk.engines.EngineCoroutineScope
 import dev.andrewhan.nomo.sdk.engines.EnginePlugin
 import dev.andrewhan.nomo.sdk.engines.NomoEngine
+import dev.andrewhan.nomo.sdk.engines.TimeStep
 import dev.andrewhan.nomo.sdk.engines.basicEngine
 import dev.andrewhan.nomo.sdk.events.KeyEvent
 import dev.andrewhan.nomo.sdk.events.KeyHoldEvent
 import dev.andrewhan.nomo.sdk.events.UpdateEvent
 import dev.andrewhan.nomo.sdk.io.Key
 import dev.andrewhan.nomo.sdk.stores.flowFor
-import dev.andrewhan.nomo.sdk.stores.getComponentOrNull
 import dev.andrewhan.nomo.sdk.stores.getComponents
 import dev.andrewhan.nomo.sdk.stores.getEntity
-import dev.andrewhan.nomo.sdk.stores.getEntityOrNull
 import dev.andrewhan.nomo.sdk.systems.NomoSystem
 import dev.andrewhan.nomo.sdk.util.isZero
 import dev.andrewhan.nomo.sdk.util.min
 import dev.andrewhan.nomo.sdk.util.toFloat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import ktx.async.KTX
+import ktx.async.newAsyncContext
+import ktx.box2d.body
+import ktx.box2d.box
+import ktx.box2d.createWorld
+import ktx.box2d.earthGravity
+import ktx.graphics.use
 import javax.inject.Inject
 import javax.inject.Qualifier
 import kotlin.system.exitProcess
@@ -64,14 +66,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import ktx.async.KTX
-import ktx.async.newAsyncContext
-import ktx.box2d.createWorld
-import ktx.graphics.use
 
 val CombatPlugin: EnginePlugin = {
   forEvent<DamageEvent> { run<ShieldSystem>() then run<ArmorSystem>() then run<DamageSystem>() }
@@ -88,59 +82,88 @@ fun main() {
     basicEngine(updateScope) {
       apply(CombatPlugin)
       apply(IOPlugin)
-      forEvent<UpdateEvent> {
-        run<PoisonSystem>()
-        run<WorldStepSystem>()
-        run<Physics2dStepSystem>()
-      }
+      apply(WorldPlugin(renderScope))
+
+      forEvent<UpdateEvent> { run<PoisonSystem>() }
       forEvent<KeyEvent> { run<PlayerControllerSystem>() }
-      forEvent<DeathEvent> { run<DeathSystem>() then run<ShutdownSystem>() }
+      forEvent<DeathEvent> { run<RemoveOnDeathSystem>() then run<ShutdownSystem>() }
       forEvent<RenderEvent>(renderScope) {
         run<ClearRenderSystem>().apply {
-          this then run<ShapeRenderSystem>()
           this then run<DebugRenderSystem>()
           this then run<DeathLogSystem>()
-
-          this then run<WorldRenderSystem>()
         }
       }
-      forEvent<Force2dEvent> { run<ForceApplicationSystem>() }
 
+      constant<TimeStep, Duration> { 1.seconds / 300 }
       constant<Poison, Float> { 10f }
     }
 
-  engine.apply {
-    "world" bind WorldComponent(createWorld())
-
-    "me" bind PlayerComponent
-    "me" bind kinematic2dComponentPackage {}
-    "me" bind Kinetic2dComponent()
-    "me" bind MassComponent(1f)
-    "me" bind DynamicBodyComponent()
-    "me" bind ShapeComponent(Rectangle(zeroVector2f(), 20f, 20f))
-
-    "you" bind HealthComponent(20f)
-    "you" bind PoisonComponent(60.seconds)
-    "you" bind
-      kinematic2dComponentPackage {
-        velocity {
-          x = 30f
-          y = 100f
-        }
+  val world = createWorld(gravity = earthGravity.scl(100f, 100f))
+  world.setContactListener(
+    object : ContactListener {
+      override fun beginContact(contact: Contact) {
+//        println("beginContact: $contact")
       }
-    "you" bind ShapeComponent(Circle(zeroVector2f(), 10f))
 
+      override fun endContact(contact: Contact) {
+//        println("endContact: $contact")
+      }
+
+      override fun preSolve(contact: Contact, oldManifold: Manifold) {
+//        println("preSolve: $contact")
+      }
+
+      override fun postSolve(contact: Contact, impulse: ContactImpulse) {
+//        println("postSolve: $contact")
+      }
+    }
+  )
+  engine.apply {
+    "world" bind WorldComponent(world)
+
+    "me" bind
+      WorldBodyComponent(
+        world,
+        world.body {
+          type = BodyType.DynamicBody
+          position.set(500f, 500f)
+          box(width = 50f, height = 50f) {
+            friction = 1f
+            density = 0.5f
+            restitution = 0.3f
+          }
+        }
+      )
+    "me" bind PlayerComponent
+
+    "you" bind
+      WorldBodyComponent(
+        world,
+        world.body {
+          type = BodyType.DynamicBody
+          position.set(525f, 600f)
+          box(width = 50f, height = 50f) {
+            friction = 1f
+            density = 0.5f
+            restitution = 0.5f
+          }
+        }
+      )
+    "you" bind HealthComponent(50f)
+    "you" bind PoisonComponent(60.seconds)
+
+    "other" bind
+      WorldBodyComponent(
+        world,
+        world.body {
+          type = BodyType.StaticBody
+          position.set(600f, 100f)
+          box(width = 1000f, height = 20f)
+        }
+      )
     "other" bind HealthComponent(50f)
     "other" bind ArmorComponent(.25f)
     "other" bind PoisonComponent(60.seconds)
-    "other" bind
-      kinematic2dComponentPackage {
-        velocity {
-          x = 100f
-          y = 100f
-        }
-      }
-    "other" bind ShapeComponent(RegularPolygon(zeroVector2f(), 20f, 7))
   }
 
   Game("Game", 1366, 768, engine).start()
@@ -163,10 +186,10 @@ constructor(
 
   override suspend fun handle(event: RenderEvent) {
     val message = buildString {
-      appendLine("DEATH LOG")
+      appendLine("Death Log")
       deaths.forEach { entity -> appendLine("$entity died") }
     }
-    batch.use(event.camera) { font.draw(it, message, 800f, event.camera.viewportHeight) }
+    batch.use(event.camera) { font.draw(it, message, 1000f, event.camera.viewportHeight) }
   }
 }
 
@@ -177,11 +200,13 @@ class DebugRenderSystem @Inject constructor(private val engine: NomoEngine) :
 
   override suspend fun handle(event: RenderEvent) {
     val message = buildString {
-      engine.entities.forEach { entity ->
+      engine.entities.sorted().forEach { entity ->
         appendLine(entity)
-        engine[entity].forEach { component ->
-          appendLine("    $component".replace("${Component::class.simpleName}", ""))
-        }
+        engine[entity]
+          .sortedBy { it::class.simpleName }
+          .forEach {
+            appendLine("    ${it.toString().replace("${Component::class.simpleName}", "")}")
+          }
       }
     }
     batch.use(event.camera) { font.draw(it, message, 0f, event.camera.viewportHeight) }
@@ -213,27 +238,6 @@ constructor(private val engine: NomoEngine, @Poison private val dps: Float) :
   }
 }
 
-class ShapeRenderSystem @Inject constructor(private val engine: NomoEngine) :
-  NomoSystem<RenderEvent>() {
-  private val shapeRenderer by lazy { ShapeRenderer() }
-
-  override suspend fun handle(event: RenderEvent) {
-    engine.getComponents<ShapeComponent>().forEach { shapeComponent ->
-      val entity = engine.getEntityOrNull(shapeComponent) ?: return
-      val position = engine.getComponentOrNull<Position2dComponent>(entity) ?: return
-      shapeRenderer.use(ShapeRenderer.ShapeType.Filled, event.camera) { renderer ->
-        val points = shapeComponent.shape.points.map { it + position }
-        points.zipWithNext { a, b -> renderer.line(a.x, a.y, b.x, b.y) }
-        if (points.size > 2) {
-          val first = points.first()
-          val last = points.last()
-          renderer.line(last.x, last.y, first.x, first.y)
-        }
-      }
-    }
-  }
-}
-
 class ShutdownSystem @Inject constructor(private val engine: NomoEngine) :
   NomoSystem<DeathEvent>() {
   override suspend fun handle(event: DeathEvent) {
@@ -243,7 +247,9 @@ class ShutdownSystem @Inject constructor(private val engine: NomoEngine) :
   }
 }
 
-object PlayerComponent : Component, Pendant, Exclusive
+object PlayerComponent : Component, Pendant, Exclusive {
+  override fun toString(): String = "${this::class.simpleName}"
+}
 
 class PlayerControllerSystem @Inject constructor(private val engine: NomoEngine) :
   NomoSystem<KeyEvent>() {
@@ -261,12 +267,5 @@ class PlayerControllerSystem @Inject constructor(private val engine: NomoEngine)
           else -> {}
         }
     }
-  }
-}
-
-class ForceApplicationSystem @Inject constructor(private val engine: NomoEngine) :
-  NomoSystem<Force2dEvent>() {
-  override suspend fun handle(event: Force2dEvent) {
-    engine.getComponentOrNull<Kinetic2dComponent>(event.entity)?.addForce(event.newtons)
   }
 }

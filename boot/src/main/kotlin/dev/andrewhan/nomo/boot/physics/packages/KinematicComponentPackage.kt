@@ -12,7 +12,7 @@ import dev.andrewhan.nomo.boot.physics.components.VelocityComponent
 import dev.andrewhan.nomo.sdk.components.ComponentPackage
 
 fun kinematic2dComponentPackage(
-  builder: Kinematic2dComponentPackageBuilder.() -> Unit
+  builder: Kinematic2dComponentPackageBuilder.() -> Unit = {}
 ): ComponentPackage = Kinematic2dComponentPackageBuilder().apply(builder).build()
 
 class Kinematic2dComponentPackageBuilder :
@@ -24,7 +24,7 @@ class Kinematic2dComponentPackageBuilder :
 }
 
 fun kinematic3dComponentPackage(
-  builder: Kinematic3dComponentPackageBuilder.() -> Unit
+  builder: Kinematic3dComponentPackageBuilder.() -> Unit = {}
 ): ComponentPackage = Kinematic3dComponentPackageBuilder().apply(builder).build()
 
 class Kinematic3dComponentPackageBuilder :

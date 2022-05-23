@@ -27,6 +27,18 @@ enum class Key {
   X,
   Y,
   Z,
+  F1,
+  F2,
+  F3,
+  F4,
+  F5,
+  F6,
+  F7,
+  F8,
+  F9,
+  F10,
+  F11,
+  F12,
   SPACE,
   CONTROL_LEFT,
   CONTROL_RIGHT,
@@ -37,5 +49,6 @@ enum class Key {
   UP,
   DOWN,
   LEFT,
-  RIGHT
+  RIGHT,
+  ESCAPE
 }

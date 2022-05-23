@@ -10,6 +10,8 @@ abstract class BiMultiMap<K, V> {
 
   abstract fun <K, V> newMultiMap(): MultiMap<K, V>
 
+  abstract fun <T> Iterable<T>.toCustomSet(): Set<T>
+
   private fun self() = this
 
   constructor(reverse: BiMultiMap<V, K>) {
@@ -37,13 +39,13 @@ abstract class BiMultiMap<K, V> {
     }
   }
 
-  fun getKeys(): Set<K> = synchronized(forwardMap) { forwardMap.keys.toSet() }
+  fun getKeys(): Set<K> = synchronized(forwardMap) { forwardMap.keys.toCustomSet() }
 
-  fun getValues(): Set<V> = synchronized(reverseMap) { reverseMap.keys.toSet() }
+  fun getValues(): Set<V> = synchronized(reverseMap) { reverseMap.keys.toCustomSet() }
 
-  operator fun get(key: K): Set<V> = synchronized(forwardMap) { forwardMap[key].toSet() }
+  operator fun get(key: K): Set<V> = synchronized(forwardMap) { forwardMap[key].toCustomSet() }
 
-  fun getByValue(value: V): Set<K> = synchronized(reverseMap) { reverseMap[value].toSet() }
+  fun getByValue(value: V): Set<K> = synchronized(reverseMap) { reverseMap[value].toCustomSet() }
 
   fun containsKey(key: K): Boolean = forwardMap.containsKey(key)
 
