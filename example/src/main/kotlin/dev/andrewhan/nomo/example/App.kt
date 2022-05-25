@@ -16,9 +16,9 @@ import dev.andrewhan.nomo.sdk.engines.NomoEngine
 import dev.andrewhan.nomo.sdk.engines.TimeStep
 import dev.andrewhan.nomo.sdk.engines.basicEngine
 import dev.andrewhan.nomo.sdk.events.ComponentRemovedEvent
-import dev.andrewhan.nomo.sdk.events.KeyEvent
-import dev.andrewhan.nomo.sdk.events.KeyPressEvent
-import dev.andrewhan.nomo.sdk.events.MouseButtonEvent
+import dev.andrewhan.nomo.sdk.io.KeyEvent
+import dev.andrewhan.nomo.sdk.io.KeyPressEvent
+import dev.andrewhan.nomo.sdk.io.MouseButtonEvent
 import dev.andrewhan.nomo.sdk.io.Key
 import dev.andrewhan.nomo.sdk.systems.NomoSystem
 import kotlinx.coroutines.CoroutineScope

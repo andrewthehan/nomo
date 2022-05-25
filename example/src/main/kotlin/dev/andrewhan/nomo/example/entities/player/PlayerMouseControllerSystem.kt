@@ -8,10 +8,10 @@ import dev.andrewhan.nomo.integration.libgdx.physics.components.BodyComponent
 import dev.andrewhan.nomo.integration.libgdx.physics.components.RopeJointComponent
 import dev.andrewhan.nomo.sdk.engines.NomoEngine
 import dev.andrewhan.nomo.sdk.entities.entity
-import dev.andrewhan.nomo.sdk.events.MouseButtonEvent
-import dev.andrewhan.nomo.sdk.events.MouseHoldButtonEvent
-import dev.andrewhan.nomo.sdk.events.MousePressButtonEvent
-import dev.andrewhan.nomo.sdk.events.MouseReleaseButtonEvent
+import dev.andrewhan.nomo.sdk.io.MouseButtonEvent
+import dev.andrewhan.nomo.sdk.io.MouseHoldButtonEvent
+import dev.andrewhan.nomo.sdk.io.MousePressButtonEvent
+import dev.andrewhan.nomo.sdk.io.MouseReleaseButtonEvent
 import dev.andrewhan.nomo.sdk.io.MouseButton
 import dev.andrewhan.nomo.sdk.stores.getComponent
 import dev.andrewhan.nomo.sdk.stores.getEntityOrNull

@@ -1,4 +1,4 @@
-package dev.andrewhan.nomo.sdk.events
+package dev.andrewhan.nomo.sdk.io
 
 import dev.andrewhan.nomo.core.Event
 import dev.andrewhan.nomo.sdk.util.Location

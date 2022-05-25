@@ -4,8 +4,8 @@ import com.badlogic.gdx.math.Vector2
 import dev.andrewhan.nomo.integration.libgdx.physics.Direction
 import dev.andrewhan.nomo.integration.libgdx.physics.events.ForceEvent
 import dev.andrewhan.nomo.sdk.engines.NomoEngine
-import dev.andrewhan.nomo.sdk.events.KeyEvent
-import dev.andrewhan.nomo.sdk.events.KeyPressEvent
+import dev.andrewhan.nomo.sdk.io.KeyEvent
+import dev.andrewhan.nomo.sdk.io.KeyPressEvent
 import dev.andrewhan.nomo.sdk.io.Key
 import dev.andrewhan.nomo.sdk.stores.getEntityOrNull
 import dev.andrewhan.nomo.sdk.systems.NomoSystem

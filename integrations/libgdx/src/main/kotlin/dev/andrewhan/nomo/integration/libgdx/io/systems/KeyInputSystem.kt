@@ -4,9 +4,9 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input.Keys
 import com.badlogic.gdx.InputMultiplexer
 import dev.andrewhan.nomo.sdk.engines.NomoEngine
-import dev.andrewhan.nomo.sdk.events.KeyHoldEvent
-import dev.andrewhan.nomo.sdk.events.KeyPressEvent
-import dev.andrewhan.nomo.sdk.events.KeyReleaseEvent
+import dev.andrewhan.nomo.sdk.io.KeyHoldEvent
+import dev.andrewhan.nomo.sdk.io.KeyPressEvent
+import dev.andrewhan.nomo.sdk.io.KeyReleaseEvent
 import dev.andrewhan.nomo.sdk.events.UpdateEvent
 import dev.andrewhan.nomo.sdk.io.Key
 import dev.andrewhan.nomo.sdk.systems.NomoSystem

@@ -3,12 +3,10 @@ package dev.andrewhan.nomo.sdk.engines
 import com.google.inject.Key
 import dev.andrewhan.nomo.core.Event
 import dev.andrewhan.nomo.core.System
-import dev.andrewhan.nomo.sdk.events.KeyEvent
 import dev.andrewhan.nomo.sdk.stores.EventStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlin.reflect.KClass
 
 inline fun <reified T> key(annotation: KClass<out Annotation>? = null): Key<T> =
