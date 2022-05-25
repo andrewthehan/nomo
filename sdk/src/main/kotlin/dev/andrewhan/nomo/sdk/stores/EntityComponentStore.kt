@@ -19,6 +19,9 @@ inline fun <reified ComponentType : Component> EntityComponentStore.getComponent
 inline fun <reified ComponentType : Component> EntityComponentStore.getComponents():
   Set<ComponentType> = getComponents(ComponentType::class)
 
+inline fun <reified ComponentType : Component> EntityComponentStore.getAssignableComponents():
+  Set<ComponentType> = getAssignableComponents(ComponentType::class)
+
 inline fun <reified ComponentType : Component> EntityComponentStore.getEntities(): Set<Entity> =
   getEntities(ComponentType::class)
 
@@ -55,6 +58,10 @@ interface EntityComponentStore : Store {
     componentType: KClass<ComponentType>
   ): Set<ComponentType>
 
+  fun <ComponentType : Component> getAssignableComponents(
+    componentType: KClass<ComponentType>
+  ): Set<ComponentType>
+
   fun <ComponentType : Component> getEntities(componentType: KClass<ComponentType>): Set<Entity>
 
   fun contains(entity: Entity): Boolean
@@ -78,24 +85,26 @@ internal class NomoEntityComponentStore : EntityComponentStore {
     get() = entitiesToComponentsMap.getValues()
 
   override fun add(entity: Entity, component: Component) {
-    if (component is Exclusive) {
-      val componentTypeAlreadyBound =
-        entitiesToComponentsMap[entity]
-          .filter { it is Exclusive }
-          .any { component::class.isInstance(it) || it::class.isInstance(component) }
-      if (componentTypeAlreadyBound) {
-        throw ExclusiveException(entity, component::class)
+    synchronized(this) {
+      if (component is Exclusive) {
+        val componentTypeAlreadyBound =
+          entitiesToComponentsMap[entity]
+            .filter { it is Exclusive }
+            .any { component::class.isInstance(it) || it::class.isInstance(component) }
+        if (componentTypeAlreadyBound) {
+          throw ExclusiveException(entity, component::class)
+        }
       }
-    }
-    if (component is Pendant) {
-      val boundedEntities = entitiesToComponentsMap.getByValue(component)
-      if (boundedEntities.any()) {
-        throw PendantException(component, boundedEntities)
+      if (component is Pendant) {
+        val boundedEntities = entitiesToComponentsMap.getByValue(component)
+        if (boundedEntities.any()) {
+          throw PendantException(component, boundedEntities)
+        }
       }
-    }
 
-    entitiesToComponentsMap.put(entity, component)
-    componentTypeToComponentsMap.put(component::class, component)
+      entitiesToComponentsMap.put(entity, component)
+      componentTypeToComponentsMap.put(component::class, component)
+    }
   }
 
   override operator fun get(entity: Entity) = entitiesToComponentsMap[entity]
@@ -109,6 +118,16 @@ internal class NomoEntityComponentStore : EntityComponentStore {
     return componentTypeToComponentsMap[componentType] as Set<ComponentType>
   }
 
+  override fun <ComponentType : Component> getAssignableComponents(
+    componentType: KClass<ComponentType>
+  ): Set<ComponentType> {
+    @Suppress("UNCHECKED_CAST") // map is configured to return the right type
+    return componentTypeToComponentsMap.keys
+      .filter { componentType.java.isAssignableFrom(it.java) }
+      .flatMap { componentTypeToComponentsMap[it] }
+      .toIdentitySet() as Set<ComponentType>
+  }
+
   override fun <ComponentType : Component> getEntities(
     componentType: KClass<ComponentType>
   ): Set<Entity> = getComponents(componentType).map(this::get).flatten().distinct().toSet()
@@ -119,34 +138,41 @@ internal class NomoEntityComponentStore : EntityComponentStore {
     entitiesToComponentsMap.containsValue(component)
 
   override fun remove(entity: Entity, component: Component): Boolean {
-    val removed = entitiesToComponentsMap.remove(entity, component)
-
-    if (removed) {
-      if (!contains(component)) {
-        assert(componentTypeToComponentsMap.remove(component::class, component)) {
-          "$component should exist in componentTypeToComponentsMap but did not."
+    return synchronized(this) {
+      entitiesToComponentsMap.remove(entity, component).also { removed ->
+        if (removed) {
+          if (!contains(component)) {
+            assert(componentTypeToComponentsMap.remove(component::class, component)) {
+              "$component should exist in componentTypeToComponentsMap but did not."
+            }
+          }
         }
       }
     }
-    return removed
   }
 
   override fun remove(entity: Entity): Set<Component> {
-    return entitiesToComponentsMap.removeKey(entity).also { associatedComponents ->
-      assert(
-        associatedComponents
-          .filter { component -> !contains(component) }
-          .all { component -> componentTypeToComponentsMap.remove(component::class, component) }
-      ) {
-        "All components removed from entitiesToComponentsMap should exist in componentTypeToComponentsMap but do not."
+    return synchronized(this) {
+      entitiesToComponentsMap.removeKey(entity).also { associatedComponents ->
+        assert(
+          associatedComponents
+            .filter { component -> !contains(component) }
+            .all { component -> componentTypeToComponentsMap.remove(component::class, component) }
+        ) {
+          "All components removed from entitiesToComponentsMap should exist in componentTypeToComponentsMap but do not."
+        }
       }
     }
   }
 
   override fun remove(component: Component): Set<Entity> {
-    return entitiesToComponentsMap.removeValue(component).also {
-      assert(componentTypeToComponentsMap.remove(component::class, component)) {
-        "$component should exist in componentTypeToComponentsMap but did not."
+    return synchronized(this) {
+      entitiesToComponentsMap.removeValue(component).also { associatedEntities ->
+        if (associatedEntities.isNotEmpty()) {
+          assert(componentTypeToComponentsMap.remove(component::class, component)) {
+            "$component should exist in componentTypeToComponentsMap but did not."
+          }
+        }
       }
     }
   }

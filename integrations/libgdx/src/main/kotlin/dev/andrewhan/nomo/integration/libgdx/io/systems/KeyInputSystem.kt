@@ -10,9 +10,9 @@ import dev.andrewhan.nomo.sdk.events.KeyReleaseEvent
 import dev.andrewhan.nomo.sdk.events.UpdateEvent
 import dev.andrewhan.nomo.sdk.io.Key
 import dev.andrewhan.nomo.sdk.systems.NomoSystem
+import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import ktx.app.KtxInputAdapter
-import javax.inject.Inject
 
 fun toKey(keyCode: Int): Key =
   when (keyCode) {
