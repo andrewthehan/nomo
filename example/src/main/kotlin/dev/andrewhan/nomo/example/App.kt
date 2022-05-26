@@ -28,6 +28,7 @@ import dev.andrewhan.nomo.sdk.systems.NomoSystem
 import dev.andrewhan.nomo.sdk.util.Location
 import dev.andrewhan.nomo.sdk.util.Size
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import ktx.async.KTX
 import ktx.async.newAsyncContext
@@ -39,8 +40,9 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
+@OptIn(ExperimentalTime::class, DelicateCoroutinesApi::class)
 fun main() {
+  Dispatchers.shutdown()
   val updateScope = CoroutineScope(newAsyncContext(8, "UpdateScope"))
   val renderScope = CoroutineScope(Dispatchers.KTX)
 
@@ -52,11 +54,10 @@ fun main() {
       apply(PhysicsPlugin(renderScope))
 
       forEvent<UpdateEvent> { run<CameraFollowBodySystem>() }
-
-      forEvent<KeyPressEvent> { run<DebugSystem>() }
-
       forEvent<KeyEvent> { run<PlayerKeyControllerSystem>() }
       forEvent<MouseButtonEvent> { run<PlayerMouseControllerSystem>() }
+
+      forEvent<KeyPressEvent> { run<DebugSystem>() }
       forEvent<ComponentRemovedEvent> { run<ShutdownSystem>() }
 
       constant<TimeStep, Duration> { 1.seconds / 300 }

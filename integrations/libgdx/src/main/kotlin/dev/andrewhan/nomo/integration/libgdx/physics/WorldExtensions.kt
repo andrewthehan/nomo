@@ -32,6 +32,3 @@ var Joint.component: JointComponent<*>
   set(value) {
     userData = value
   }
-
-// val Body.entityOrNull: Entity?
-//  get() = userData as Entity?

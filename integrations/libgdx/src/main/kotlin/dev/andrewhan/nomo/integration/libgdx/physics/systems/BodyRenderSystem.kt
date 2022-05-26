@@ -15,10 +15,10 @@ class BodyRenderSystem @Inject constructor(private val engine: NomoEngine) :
 
   override suspend fun handle(event: RenderEvent) {
     val cameras = engine.getComponents<CameraComponent>()
-    val bodies = engine.getComponents<BodyComponent>().map { it.world }.distinct()
+    val worlds = engine.getComponents<BodyComponent>().map { it.world }.distinct()
 
     cameras.forEach { cameraComponent ->
-      bodies.forEach { safeWorld ->
+      worlds.forEach { safeWorld ->
         safeWorld.safeRun { world ->
           cameraComponent.use { camera -> debugRenderer.render(world, camera.combined) }
         }

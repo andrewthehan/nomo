@@ -18,6 +18,7 @@ import dev.andrewhan.nomo.sdk.stores.getEntityOrNull
 import dev.andrewhan.nomo.sdk.systems.NomoSystem
 import ktx.math.minus
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.ExperimentalTime
 
 class PlayerMouseControllerSystem @Inject constructor(private val engine: NomoEngine) :
@@ -44,7 +45,7 @@ class PlayerMouseControllerSystem @Inject constructor(private val engine: NomoEn
                   type = BodyDef.BodyType.StaticBody
                   position.set(camera.toWorld(event.location))
                 },
-                DelayedActionComponent { entity, engine ->
+                DelayedActionComponent(1.nanoseconds) { entity, engine ->
                   val nodeBody = engine.getComponent<BodyComponent>(entity)
                   engine.entity(
                     RopeJointComponent(playerBody.world, playerBody, nodeBody) {
