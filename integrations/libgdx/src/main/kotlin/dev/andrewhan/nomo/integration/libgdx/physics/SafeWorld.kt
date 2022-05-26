@@ -32,10 +32,13 @@ import ktx.box2d.ropeJointWith
 import ktx.box2d.weldJointWith
 import ktx.box2d.wheelJointWith
 
-fun createSafeWorld(gravity: Vector2 = Vector2.Zero, allowSleep: Boolean = true): SafeWorld =
-  SafeWorld(createWorld(gravity, allowSleep))
+fun createSafeWorld(
+  name: String,
+  gravity: Vector2 = Vector2.Zero,
+  allowSleep: Boolean = true
+): SafeWorld = SafeWorld(name, createWorld(gravity, allowSleep))
 
-class SafeWorld internal constructor(world: World) : SafeAccessor<World>(world) {
+class SafeWorld internal constructor(val name: String, world: World) : SafeAccessor<World>(world) {
   private val entityBodyMap: MutableMap<BodyComponent, Body> = mutableMapOf()
   private val entityJointMap: MutableMap<JointComponent<*>, Joint> = mutableMapOf()
 
@@ -115,4 +118,6 @@ class SafeWorld internal constructor(world: World) : SafeAccessor<World>(world) 
       entityJointMap.remove(jointComponent, jointComponent.joint)
     }
   }
+
+  override fun toString(): String = "${this::class.simpleName}(name=$name)"
 }

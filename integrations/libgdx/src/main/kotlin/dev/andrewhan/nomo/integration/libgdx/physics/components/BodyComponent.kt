@@ -10,4 +10,6 @@ class BodyComponent(val world: SafeWorld, val bodyDef: BodyDefinition.() -> Unit
   Component, Exclusive, Pendant {
   val body
     get() = world.getBody(this)
+
+  override fun toString(): String = "${this::class.simpleName}(world=$world)"
 }

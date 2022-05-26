@@ -30,6 +30,9 @@ sealed class JointComponent<JointType : JointDef>(
     get() = bodyComponentA.body
   val bodyB
     get() = bodyComponentB.body
+
+  override fun toString(): String =
+    "${this::class.simpleName}(world=$world,bodyComponentA=$bodyComponentA,bodyComponentB=$bodyComponentB)"
 }
 
 class GearJointComponent(

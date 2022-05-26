@@ -4,7 +4,6 @@ import com.badlogic.gdx.Application
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration
-import com.badlogic.gdx.graphics.OrthographicCamera
 import dev.andrewhan.nomo.integration.libgdx.render.events.RenderEvent
 import dev.andrewhan.nomo.sdk.engines.NomoEngine
 import dev.andrewhan.nomo.sdk.engines.TimeStep
@@ -27,10 +26,9 @@ class GameBuilder(private val engine: NomoEngine) {
   var title: String = "Game"
   var width: Int = 1366
   var height: Int = 768
-  var worldScale: Float = 1f
 
   fun build(): Game {
-    return Game(title, width, height, worldScale, engine)
+    return Game(title, width, height, engine)
   }
 }
 
@@ -39,14 +37,8 @@ class Game(
   private val title: String,
   private val width: Int,
   private val height: Int,
-  private val worldScale: Float,
   private val engine: NomoEngine
 ) : KtxApplicationAdapter, KtxInputAdapter {
-  private val camera by lazy {
-    OrthographicCamera().apply {
-      setToOrtho(false, width.toFloat() * worldScale, height.toFloat() * worldScale)
-    }
-  }
 
   private val timeStep: Duration = engine.getInstance(key<Duration>(TimeStep::class))
   private var accumulator: Duration = ZERO
@@ -69,14 +61,13 @@ class Game(
   }
 
   override fun render() {
-    camera.update()
     runBlocking {
       accumulator += Gdx.graphics.deltaTime.toDouble().seconds
       while (accumulator >= timeStep) {
         engine.dispatchEvent(UpdateEvent(timeStep))
         accumulator -= timeStep
       }
-      engine.dispatchEvent(RenderEvent(camera))
+      engine.dispatchEvent(RenderEvent)
     }
   }
 }

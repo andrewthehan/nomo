@@ -4,12 +4,12 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input.Buttons
 import com.badlogic.gdx.InputMultiplexer
 import dev.andrewhan.nomo.sdk.engines.NomoEngine
+import dev.andrewhan.nomo.sdk.events.UpdateEvent
+import dev.andrewhan.nomo.sdk.io.MouseButton
 import dev.andrewhan.nomo.sdk.io.MouseHoldButtonEvent
 import dev.andrewhan.nomo.sdk.io.MousePositionEvent
 import dev.andrewhan.nomo.sdk.io.MousePressButtonEvent
 import dev.andrewhan.nomo.sdk.io.MouseReleaseButtonEvent
-import dev.andrewhan.nomo.sdk.events.UpdateEvent
-import dev.andrewhan.nomo.sdk.io.MouseButton
 import dev.andrewhan.nomo.sdk.systems.NomoSystem
 import dev.andrewhan.nomo.sdk.util.Location
 import kotlinx.coroutines.runBlocking
