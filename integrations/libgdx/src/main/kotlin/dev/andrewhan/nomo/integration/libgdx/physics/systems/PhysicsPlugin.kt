@@ -19,4 +19,5 @@ fun PhysicsPlugin(renderScope: CoroutineScope): EnginePlugin = {
 
   forEvent<ComponentAddedEvent> { run<CreatorSystem>() }
   forEvent<ComponentRemovedEvent> { run<RemoverSystem>() }
+  forEvent<UpdateEvent> { run<CleanUpSystem>() }
 }

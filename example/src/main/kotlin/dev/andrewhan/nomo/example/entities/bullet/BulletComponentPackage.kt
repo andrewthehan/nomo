@@ -23,6 +23,6 @@ fun bulletComponentPackage(bodyComponent: BodyComponent): ComponentPackage {
       linearVelocity.set(direction * 2f)
       circle(radius = .05f)
     },
-    DelayedActionComponent(1.seconds) { entity, engine -> engine.remove(entity) }
+    DelayedActionComponent(1.seconds) { entity, engine -> engine.remove(entity).isNotEmpty() }
   )
 }

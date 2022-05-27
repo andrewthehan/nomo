@@ -14,15 +14,16 @@ import dev.andrewhan.nomo.sdk.io.MouseHoldButtonEvent
 import dev.andrewhan.nomo.sdk.io.MousePressButtonEvent
 import dev.andrewhan.nomo.sdk.io.MouseReleaseButtonEvent
 import dev.andrewhan.nomo.sdk.stores.getComponent
+import dev.andrewhan.nomo.sdk.stores.getComponentOrNull
 import dev.andrewhan.nomo.sdk.stores.getEntityOrNull
 import dev.andrewhan.nomo.sdk.systems.NomoSystem
+import dev.andrewhan.nomo.sdk.systems.SystemFeatures
 import ktx.math.minus
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.ExperimentalTime
 
 class PlayerMouseControllerSystem @Inject constructor(private val engine: NomoEngine) :
-  NomoSystem<MouseButtonEvent>() {
+  NomoSystem<MouseButtonEvent>(SystemFeatures.CONCURRENT) {
   private var node: Entity? = null
 
   @OptIn(ExperimentalTime::class)
@@ -45,13 +46,16 @@ class PlayerMouseControllerSystem @Inject constructor(private val engine: NomoEn
                   type = BodyDef.BodyType.StaticBody
                   position.set(camera.toWorld(event.location))
                 },
-                DelayedActionComponent(1.nanoseconds) { entity, engine ->
-                  val nodeBody = engine.getComponent<BodyComponent>(entity)
+                DelayedActionComponent { entity, engine ->
+                  val nodeBody =
+                    engine.getComponentOrNull<BodyComponent>(entity)
+                      ?: return@DelayedActionComponent false
                   engine.entity(
                     RopeJointComponent(playerBody.world, playerBody, nodeBody) {
                       maxLength = (nodeBody.body.position - playerBody.body.position).len()
                     }
                   )
+                  true
                 }
               )
           }

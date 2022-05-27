@@ -22,6 +22,10 @@ class PeriodicActionComponent(
 
   fun update(elapsed: Duration, engine: NomoEngine) {
     synchronized(this) {
+      if (!engine.contains(this)) {
+        return
+      }
+
       this.elapsed += elapsed
       while (this.elapsed >= delay) {
         action(engine.getEntity(this), engine)

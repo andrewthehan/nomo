@@ -5,6 +5,7 @@ import dev.andrewhan.nomo.boot.combat.events.DamageEvent
 import dev.andrewhan.nomo.sdk.engines.NomoEngine
 import dev.andrewhan.nomo.sdk.stores.getComponentOrNull
 import dev.andrewhan.nomo.sdk.systems.NomoSystem
+import dev.andrewhan.nomo.sdk.systems.SystemFeatures
 import javax.inject.Inject
 
 fun ShieldComponent.absorb(event: DamageEvent) {
@@ -12,7 +13,7 @@ fun ShieldComponent.absorb(event: DamageEvent) {
 }
 
 class ShieldSystem @Inject constructor(private val engine: NomoEngine) :
-  NomoSystem<DamageEvent>(propagate = false) {
+  NomoSystem<DamageEvent>(SystemFeatures.SWALLOW_EVENTS) {
   override suspend fun handle(event: DamageEvent) {
     val shield = engine.getComponentOrNull<ShieldComponent>(event.entity)
 

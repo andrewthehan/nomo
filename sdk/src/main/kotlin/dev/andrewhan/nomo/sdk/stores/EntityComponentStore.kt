@@ -4,8 +4,8 @@ import dev.andrewhan.nomo.core.Component
 import dev.andrewhan.nomo.core.Entity
 import dev.andrewhan.nomo.core.Store
 import dev.andrewhan.nomo.sdk.components.Exclusive
-import dev.andrewhan.nomo.sdk.components.Pendant
 import dev.andrewhan.nomo.sdk.components.ExclusiveException
+import dev.andrewhan.nomo.sdk.components.Pendant
 import dev.andrewhan.nomo.sdk.components.PendantException
 import dev.andrewhan.nomo.sdk.util.IdentityBiMultiMap
 import dev.andrewhan.nomo.sdk.util.IdentityMultiMap
@@ -121,11 +121,13 @@ internal class NomoEntityComponentStore : EntityComponentStore {
   override fun <ComponentType : Component> getAssignableComponents(
     componentType: KClass<ComponentType>
   ): Set<ComponentType> {
-    @Suppress("UNCHECKED_CAST") // map is configured to return the right type
-    return componentTypeToComponentsMap.keys
-      .filter { componentType.java.isAssignableFrom(it.java) }
-      .flatMap { componentTypeToComponentsMap[it] }
-      .toIdentitySet() as Set<ComponentType>
+    return synchronized(this) {
+      @Suppress("UNCHECKED_CAST") // map is configured to return the right type
+      componentTypeToComponentsMap.keys
+        .filter { componentType.java.isAssignableFrom(it.java) }
+        .flatMap { componentTypeToComponentsMap[it] }
+        .toIdentitySet() as Set<ComponentType>
+    }
   }
 
   override fun <ComponentType : Component> getEntities(

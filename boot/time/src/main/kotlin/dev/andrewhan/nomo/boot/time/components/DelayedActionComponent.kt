@@ -12,7 +12,7 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalTime::class)
 class DelayedActionComponent(
   private val delay: Duration = ZERO,
-  private val action: (Entity, NomoEngine) -> Unit
+  private val action: (Entity, NomoEngine) -> Boolean
 ) : Component, Pendant {
   private var elapsed: Duration = ZERO
 
@@ -24,8 +24,9 @@ class DelayedActionComponent(
 
       this.elapsed += elapsed
       if (this.elapsed >= delay) {
-        action(engine.getEntity(this), engine)
-        engine.remove(this)
+        if (action(engine.getEntity(this), engine)) {
+          engine.remove(this)
+        }
       }
     }
   }
