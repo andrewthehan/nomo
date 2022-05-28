@@ -13,6 +13,7 @@ fun NomoEngine.newPlayer(world: SafeWorld): Entity =
   entity(
     PlayerComponent,
     PlayerLevelComponent(),
+    PlayerStatsComponent(),
     BodyComponent(world) {
       type = BodyDef.BodyType.KinematicBody
       position.set(-5f, 0f)
