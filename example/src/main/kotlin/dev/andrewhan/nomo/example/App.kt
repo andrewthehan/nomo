@@ -17,6 +17,7 @@ import dev.andrewhan.nomo.integration.libgdx.game
 import dev.andrewhan.nomo.integration.libgdx.io.systems.IOPlugin
 import dev.andrewhan.nomo.integration.libgdx.physics.SafeWorld
 import dev.andrewhan.nomo.integration.libgdx.physics.components.BodyComponent
+import dev.andrewhan.nomo.integration.libgdx.physics.components.DestroySelfOnCollisionComponent
 import dev.andrewhan.nomo.integration.libgdx.physics.createSafeWorld
 import dev.andrewhan.nomo.integration.libgdx.physics.events.StartCollisionEvent
 import dev.andrewhan.nomo.integration.libgdx.physics.systems.PhysicsPlugin
@@ -24,6 +25,8 @@ import dev.andrewhan.nomo.integration.libgdx.render.components.CameraComponent
 import dev.andrewhan.nomo.sdk.engines.NomoEngine
 import dev.andrewhan.nomo.sdk.engines.TimeStep
 import dev.andrewhan.nomo.sdk.engines.basicEngine
+import dev.andrewhan.nomo.sdk.engines.key
+import dev.andrewhan.nomo.sdk.entities.entity
 import dev.andrewhan.nomo.sdk.events.ComponentRemovedEvent
 import dev.andrewhan.nomo.sdk.events.UpdateEvent
 import dev.andrewhan.nomo.sdk.io.KeyEvent
@@ -68,11 +71,12 @@ fun main() {
       forEvent<ComponentRemovedEvent> { run<ShutdownSystem>() }
 
       constant<TimeStep, Duration> { 1.seconds / 300 }
+      constant<GameBounds, Size> { Size(12f, 6f) }
     }
 
   val world = createSafeWorld("main world")
   engine.apply {
-    "camera" bind CameraComponent(Location(), Size(1366, 768), Vector2(), 0.01f)
+    "camera" bind CameraComponent(Location(), Size(1366f, 768f), Vector2(), 0.01f)
     newPlayer(world)
     newBall(world)
 
@@ -83,11 +87,15 @@ fun main() {
 }
 
 fun NomoEngine.newWalls(world: SafeWorld) {
+  val gameBounds = getInstance(key<Size>(GameBounds::class))
+  val width = gameBounds.width
+  val height = gameBounds.height
+
   "top wall" bind
     BodyComponent(world) {
       type = BodyType.StaticBody
-      position.set(0f, 3f)
-      box(width = 1366f, height = 0.1f) {
+      position.set(0f, height / 2)
+      box(width = width, height = 0.1f) {
         friction = 0f
         restitution = 1f
       }
@@ -96,8 +104,8 @@ fun NomoEngine.newWalls(world: SafeWorld) {
   "bottom wall" bind
     BodyComponent(world) {
       type = BodyType.StaticBody
-      position.set(0f, -3f)
-      box(width = 1366f, height = 0.1f) {
+      position.set(0f, -height / 2)
+      box(width = width, height = 0.1f) {
         friction = 0f
         restitution = 1f
       }
@@ -106,10 +114,26 @@ fun NomoEngine.newWalls(world: SafeWorld) {
   "right wall" bind
     BodyComponent(world) {
       type = BodyType.StaticBody
-      position.set(5f, 0f)
-      box(width = 0.1f, height = 768f) {
+      position.set(width / 2, 0f)
+      box(width = 0.1f, height = height) {
         friction = 0f
         restitution = 1f
       }
     }
+
+  val segments = 10
+  val segmentHeight = height / segments
+  repeat(segments) {
+    entity(
+      BodyComponent(world) {
+        type = BodyType.StaticBody
+        position.set(-width / 2, (-height / 2) + (it * height / segments) + (segmentHeight / 2))
+        box(width = 0.1f, height = height / segments) {
+          friction = 0f
+          restitution = 1f
+        }
+      },
+      DestroySelfOnCollisionComponent
+    )
+  }
 }

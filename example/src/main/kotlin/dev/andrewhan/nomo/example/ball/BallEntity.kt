@@ -1,9 +1,10 @@
 package dev.andrewhan.nomo.example.ball
 
+import com.badlogic.gdx.math.MathUtils.random
+import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.physics.box2d.BodyDef
 import dev.andrewhan.nomo.boot.time.components.DelayedActionComponent
 import dev.andrewhan.nomo.core.Entity
-import dev.andrewhan.nomo.integration.libgdx.physics.Direction
 import dev.andrewhan.nomo.integration.libgdx.physics.SafeWorld
 import dev.andrewhan.nomo.integration.libgdx.physics.components.BodyComponent
 import dev.andrewhan.nomo.integration.libgdx.physics.events.ForceEvent
@@ -28,8 +29,7 @@ fun NomoEngine.newBall(world: SafeWorld): Entity =
     },
     DelayedActionComponent(1.seconds) { entity, engine ->
       val speed = 7f
-      val direction = Direction.RIGHT
-      // Vector2(Math.random().toFloat(), Math.random().toFloat()).nor()
+      val direction = Vector2(1f, random(-.5f, .5f)).nor()
 
       engine.dispatchEvent(ForceEvent(direction * speed, entity))
       true

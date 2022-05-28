@@ -1,6 +1,7 @@
 package dev.andrewhan.nomo.integration.libgdx.physics.systems
 
 import dev.andrewhan.nomo.integration.libgdx.physics.events.ForceEvent
+import dev.andrewhan.nomo.integration.libgdx.physics.events.StartCollisionEvent
 import dev.andrewhan.nomo.integration.libgdx.render.events.RenderEvent
 import dev.andrewhan.nomo.integration.libgdx.render.systems.ClearRenderSystem
 import dev.andrewhan.nomo.sdk.engines.EnginePlugin
@@ -16,6 +17,7 @@ fun PhysicsPlugin(renderScope: CoroutineScope): EnginePlugin = {
 
   forEvent<ForceEvent> { run<ForceApplicationSystem>() }
   forEvent<ComponentAddedEvent> { run<CollisionDetectionSystem>() }
+  forEvent<StartCollisionEvent> { run<DestroyOnCollisionSystem>() }
 
   forEvent<ComponentAddedEvent> { run<CreatorSystem>() }
   forEvent<ComponentRemovedEvent> { run<RemoverSystem>() }

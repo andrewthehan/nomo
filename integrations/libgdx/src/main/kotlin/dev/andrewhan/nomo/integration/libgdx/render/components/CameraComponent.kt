@@ -40,8 +40,8 @@ class CameraComponent(
       viewport.setScreenBounds(
         viewportOrigin.x,
         viewportOrigin.y,
-        viewportSize.width,
-        viewportSize.height
+        viewportSize.width.toInt(),
+        viewportSize.height.toInt()
       )
       viewport.apply()
       block(viewport.camera)

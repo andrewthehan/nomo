@@ -1,3 +1,3 @@
 package dev.andrewhan.nomo.sdk.util
 
-data class Size(val width: Int = 0, val height: Int = 0)
+data class Size(val width: Float = 0f, val height: Float = 0f)
