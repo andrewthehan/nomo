@@ -1,6 +1,7 @@
 package dev.andrewhan.nomo.example.player
 
 import com.badlogic.gdx.math.Vector2
+import dev.andrewhan.nomo.boot.player.components.PlayerComponent
 import dev.andrewhan.nomo.integration.libgdx.physics.Direction
 import dev.andrewhan.nomo.integration.libgdx.physics.components.BodyComponent
 import dev.andrewhan.nomo.sdk.engines.NomoEngine
@@ -54,7 +55,7 @@ class PlayerKeyControllerSystem @Inject constructor(private val engine: NomoEngi
     }
 
     val direction = heldKeys.map { it.toDirection() }.fold(Vector2.Zero) { acc, v -> acc + v }.nor()
-    val velocity = direction * 10f
+    val velocity = direction * 5f
     engine.getComponent<BodyComponent>(entity).body.linearVelocity = velocity
   }
 }

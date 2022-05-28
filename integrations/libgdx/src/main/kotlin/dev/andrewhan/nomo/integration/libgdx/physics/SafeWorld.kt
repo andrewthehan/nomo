@@ -66,6 +66,7 @@ class SafeWorld internal constructor(val name: String, world: World) : SafeAcces
       }
       val body = bodyComponent.body
       world.destroyBody(body)
+      body.component = null
       entityBodyMap.remove(bodyComponent, body)
     }
   }
@@ -157,11 +158,13 @@ class SafeWorld internal constructor(val name: String, world: World) : SafeAcces
       if (!entityJointMap.contains(jointComponent)) {
         return@safeRun false
       }
+      val joint = jointComponent.joint
       // could have been removed if the associated body was already removed
-      if (it.allJoints.contains(jointComponent.joint)) {
-        it.destroyJoint(jointComponent.joint)
+      if (it.allJoints.contains(joint)) {
+        it.destroyJoint(joint)
       }
-      entityJointMap.remove(jointComponent, jointComponent.joint)
+      joint.component = null
+      entityJointMap.remove(jointComponent, joint)
     }
   }
 

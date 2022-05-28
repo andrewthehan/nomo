@@ -1,4 +1,4 @@
-package dev.andrewhan.nomo.example.player
+package dev.andrewhan.nomo.boot.player.components
 
 import dev.andrewhan.nomo.core.Component
 import dev.andrewhan.nomo.sdk.components.Exclusive

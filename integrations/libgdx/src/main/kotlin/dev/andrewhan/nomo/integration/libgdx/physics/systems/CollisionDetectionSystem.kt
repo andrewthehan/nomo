@@ -18,13 +18,23 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class ImmutableContact(world: World, addr: Long) : Contact(world, addr) {
-  init {
-    getWorldManifold()
+class LoadedContact(world: World, addr: Long) : Contact(world, addr) {
+  companion object {
+    fun create(contact: Contact): Contact {
+      val worldField = Contact::class.java.getDeclaredField("world")
+      worldField.isAccessible = true
+      val world = worldField.get(contact) as World
+
+      val addrField = Contact::class.java.getDeclaredField("addr")
+      addrField.isAccessible = true
+      val addr = addrField.getLong(contact)
+
+      return LoadedContact(world, addr).also { it.getWorldManifold() }
+    }
   }
 }
 
-class CollisionSystem
+class CollisionDetectionSystem
 @Inject
 constructor(
   private val engine: NomoEngine,
@@ -35,26 +45,16 @@ constructor(
   private fun addContactListener(world: SafeWorld) {
     val contactListener =
       object : ContactListener {
-        private fun Contact.copy(): Contact {
-          val worldField = Contact::class.java.getDeclaredField("world")
-          worldField.isAccessible = true
-
-          val addrField = Contact::class.java.getDeclaredField("addr")
-          addrField.isAccessible = true
-
-          return ImmutableContact(worldField.get(this) as World, addrField.get(this) as Long)
-        }
-
         private fun dispatch(event: Event) {
           scope.launch { engine.dispatchEvent(event) }
         }
 
         override fun beginContact(contact: Contact) {
-          dispatch(StartCollisionEvent(world, contact.copy()))
+          dispatch(StartCollisionEvent(world, LoadedContact.create(contact)))
         }
 
         override fun endContact(contact: Contact) {
-          dispatch(EndCollisionEvent(world, contact.copy()))
+          dispatch(EndCollisionEvent(world, LoadedContact.create(contact)))
         }
 
         override fun preSolve(contact: Contact, oldManifold: Manifold) {}

@@ -12,15 +12,19 @@ import dev.andrewhan.nomo.sdk.util.IdentityMultiMap
 import dev.andrewhan.nomo.sdk.util.toIdentitySet
 import kotlin.reflect.KClass
 
-inline fun <reified ComponentType : Component> EntityComponentStore.getComponents(
-  entity: Entity
-): Set<ComponentType> = this[entity].filterIsInstance<ComponentType>().toIdentitySet()
-
 inline fun <reified ComponentType : Component> EntityComponentStore.getComponents():
   Set<ComponentType> = getComponents(ComponentType::class)
 
 inline fun <reified ComponentType : Component> EntityComponentStore.getAssignableComponents():
   Set<ComponentType> = getAssignableComponents(ComponentType::class)
+
+inline fun <reified ComponentType : Component> EntityComponentStore.getComponents(
+  entity: Entity
+): Set<ComponentType> = this[entity].filterIsInstance<ComponentType>().toIdentitySet()
+
+inline fun <reified ComponentType : Component> EntityComponentStore.getAssignableComponents(
+  entity: Entity
+): Set<ComponentType> = getAssignableComponents(ComponentType::class, entity)
 
 inline fun <reified ComponentType : Component> EntityComponentStore.getEntities(): Set<Entity> =
   getEntities(ComponentType::class)
@@ -39,10 +43,19 @@ inline fun <reified ExclusiveComponent> EntityComponentStore.getComponent(
 ): ExclusiveComponent where ExclusiveComponent : Component, ExclusiveComponent : Exclusive =
   this[entity].filterIsInstance<ExclusiveComponent>().single()
 
+inline fun <reified ExclusiveComponent> EntityComponentStore.getAssignableComponent(
+  entity: Entity
+): ExclusiveComponent where ExclusiveComponent : Component, ExclusiveComponent : Exclusive =
+  getAssignableComponents<ExclusiveComponent>(entity).single()
+
 inline fun <reified ExclusiveComponent> EntityComponentStore.getComponentOrNull(
   entity: Entity
 ): ExclusiveComponent? where ExclusiveComponent : Component, ExclusiveComponent : Exclusive =
   this[entity].filterIsInstance<ExclusiveComponent>().singleOrNull()
+
+inline fun <reified ComponentType : Component> EntityComponentStore.containsComponent(
+  entity: Entity
+): Boolean = getComponents<ComponentType>(entity).isNotEmpty()
 
 interface EntityComponentStore : Store {
   val entities: Set<Entity>
@@ -60,6 +73,11 @@ interface EntityComponentStore : Store {
 
   fun <ComponentType : Component> getAssignableComponents(
     componentType: KClass<ComponentType>
+  ): Set<ComponentType>
+
+  fun <ComponentType : Component> getAssignableComponents(
+    componentType: KClass<ComponentType>,
+    entity: Entity
   ): Set<ComponentType>
 
   fun <ComponentType : Component> getEntities(componentType: KClass<ComponentType>): Set<Entity>
@@ -127,6 +145,17 @@ internal class NomoEntityComponentStore : EntityComponentStore {
         .filter { componentType.java.isAssignableFrom(it.java) }
         .flatMap { componentTypeToComponentsMap[it] }
         .toIdentitySet() as Set<ComponentType>
+    }
+  }
+
+  override fun <ComponentType : Component> getAssignableComponents(
+    componentType: KClass<ComponentType>,
+    entity: Entity
+  ): Set<ComponentType> {
+    return synchronized(this) {
+      @Suppress("UNCHECKED_CAST") // checked by filter
+      this[entity].filter { componentType.java.isAssignableFrom(it::class.java) }.toIdentitySet()
+        as Set<ComponentType>
     }
   }
 

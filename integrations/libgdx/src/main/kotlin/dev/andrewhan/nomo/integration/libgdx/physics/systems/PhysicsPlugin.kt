@@ -15,7 +15,7 @@ fun PhysicsPlugin(renderScope: CoroutineScope): EnginePlugin = {
   forEvent<RenderEvent>(renderScope) { run<ClearRenderSystem>() then run<BodyRenderSystem>() }
 
   forEvent<ForceEvent> { run<ForceApplicationSystem>() }
-  forEvent<ComponentAddedEvent> { run<CollisionSystem>() }
+  forEvent<ComponentAddedEvent> { run<CollisionDetectionSystem>() }
 
   forEvent<ComponentAddedEvent> { run<CreatorSystem>() }
   forEvent<ComponentRemovedEvent> { run<RemoverSystem>() }

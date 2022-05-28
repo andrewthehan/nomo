@@ -1,6 +1,7 @@
 package dev.andrewhan.nomo.example.player
 
 import com.badlogic.gdx.physics.box2d.BodyDef
+import dev.andrewhan.nomo.boot.player.components.PlayerComponent
 import dev.andrewhan.nomo.boot.time.components.DelayedActionComponent
 import dev.andrewhan.nomo.core.Entity
 import dev.andrewhan.nomo.integration.libgdx.physics.components.BodyComponent
@@ -62,12 +63,12 @@ class PlayerMouseControllerSystem @Inject constructor(private val engine: NomoEn
           else -> {}
         }
       }
-      is MouseHoldButtonEvent -> {}
       is MouseReleaseButtonEvent -> {
         node ?: return
         engine.remove(node!!)
         node = null
       }
+      is MouseHoldButtonEvent -> {}
     }
   }
 }

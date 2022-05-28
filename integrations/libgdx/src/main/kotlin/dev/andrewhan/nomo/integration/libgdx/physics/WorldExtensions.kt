@@ -21,14 +21,14 @@ val World.allJoints: Set<Joint>
     return joints.toSet()
   }
 
-var Body.component: BodyComponent
-  get() = userData as BodyComponent
+var Body.component: BodyComponent?
+  get() = userData as BodyComponent?
   set(value) {
     userData = value
   }
 
-var Joint.component: JointComponent<*>
-  get() = userData as JointComponent<*>
+var Joint.component: JointComponent<*>?
+  get() = userData as JointComponent<*>?
   set(value) {
     userData = value
   }

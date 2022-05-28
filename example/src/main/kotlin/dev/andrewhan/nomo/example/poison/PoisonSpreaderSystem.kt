@@ -15,9 +15,8 @@ class PoisonSpreaderSystem @Inject constructor(private val engine: NomoEngine) :
   NomoSystem<StartCollisionEvent>() {
   @OptIn(ExperimentalTime::class)
   override suspend fun handle(event: StartCollisionEvent) {
-    val (world, contact) = event
-    val entityA = engine.getEntity(contact.fixtureA.body.component)
-    val entityB = engine.getEntity(contact.fixtureB.body.component)
+    val entityA = engine.getEntity(event.contact.fixtureA.body.component ?: return)
+    val entityB = engine.getEntity(event.contact.fixtureB.body.component ?: return)
 
     val poisonA = engine.getComponentOrNull<PoisonComponent>(entityA)
     val poisonB = engine.getComponentOrNull<PoisonComponent>(entityB)
