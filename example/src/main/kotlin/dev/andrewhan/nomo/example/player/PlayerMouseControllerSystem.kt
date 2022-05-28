@@ -1,4 +1,4 @@
-package dev.andrewhan.nomo.example.entities.player
+package dev.andrewhan.nomo.example.player
 
 import com.badlogic.gdx.physics.box2d.BodyDef
 import dev.andrewhan.nomo.boot.time.components.DelayedActionComponent
