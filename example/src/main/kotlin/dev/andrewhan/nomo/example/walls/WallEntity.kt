@@ -50,10 +50,10 @@ fun NomoEngine.newWalls(world: SafeWorld) {
       }
     }
 
-  newLeftWall(world)
+  newWallSegments(world)
 }
 
-fun NomoEngine.newLeftWall(world: SafeWorld) {
+fun NomoEngine.newWallSegments(world: SafeWorld) {
   val gameBounds = getInstance(key<Size>(GameBounds::class))
   val width = gameBounds.width
   val height = gameBounds.height
@@ -75,6 +75,7 @@ fun NomoEngine.newLeftWall(world: SafeWorld) {
           restitution = 1f
         }
       },
+      WallSegmentComponent,
       DestroySelfOnCollisionComponent
     )
   }

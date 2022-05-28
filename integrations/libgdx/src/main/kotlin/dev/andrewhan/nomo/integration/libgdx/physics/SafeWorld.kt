@@ -55,8 +55,8 @@ class SafeWorld internal constructor(val name: String, world: World) : SafeAcces
     }
   }
 
-  fun getBody(bodyComponent: BodyComponent): Body {
-    return entityBodyMap[bodyComponent]!!
+  fun getBody(bodyComponent: BodyComponent): Body? {
+    return entityBodyMap[bodyComponent]
   }
 
   fun removeBody(bodyComponent: BodyComponent): Boolean {
@@ -64,7 +64,8 @@ class SafeWorld internal constructor(val name: String, world: World) : SafeAcces
       if (!entityBodyMap.contains(bodyComponent)) {
         return@safeRun false
       }
-      val body = bodyComponent.body
+      // checked above
+      val body = bodyComponent.body!!
       world.destroyBody(body)
       body.component = null
       entityBodyMap.remove(bodyComponent, body)
@@ -86,71 +87,31 @@ class SafeWorld internal constructor(val name: String, world: World) : SafeAcces
         addBody(jointComponent.bodyB)
       }
 
+      // added above
+      val bodyA = jointComponent.bodyA.body!!
+      val bodyB = jointComponent.bodyB.body!!
+
       val joint =
         when (jointComponent) {
-          is DistanceJointComponent ->
-            jointComponent.bodyA.body.distanceJointWith(
-              jointComponent.bodyB.body,
-              jointComponent.jointDef
-            )
-          is FrictionJointComponent ->
-            jointComponent.bodyA.body.frictionJointWith(
-              jointComponent.bodyB.body,
-              jointComponent.jointDef
-            )
-          is GearJointComponent ->
-            jointComponent.bodyA.body.gearJointWith(
-              jointComponent.bodyB.body,
-              jointComponent.jointDef
-            )
-          is MotorJointComponent ->
-            jointComponent.bodyA.body.motorJointWith(
-              jointComponent.bodyB.body,
-              jointComponent.jointDef
-            )
-          is MouseJointComponent ->
-            jointComponent.bodyA.body.mouseJointWith(
-              jointComponent.bodyB.body,
-              jointComponent.jointDef
-            )
-          is PrismaticJointComponent ->
-            jointComponent.bodyA.body.prismaticJointWith(
-              jointComponent.bodyB.body,
-              jointComponent.jointDef
-            )
-          is PulleyJointComponent ->
-            jointComponent.bodyA.body.pulleyJointWith(
-              jointComponent.bodyB.body,
-              jointComponent.jointDef
-            )
-          is RopeJointComponent ->
-            jointComponent.bodyA.body.ropeJointWith(
-              jointComponent.bodyB.body,
-              jointComponent.jointDef
-            )
-          is RevoluteJointComponent ->
-            jointComponent.bodyA.body.revoluteJointWith(
-              jointComponent.bodyB.body,
-              jointComponent.jointDef
-            )
-          is WeldJointComponent ->
-            jointComponent.bodyA.body.weldJointWith(
-              jointComponent.bodyB.body,
-              jointComponent.jointDef
-            )
-          is WheelJointComponent ->
-            jointComponent.bodyA.body.wheelJointWith(
-              jointComponent.bodyB.body,
-              jointComponent.jointDef
-            )
+          is DistanceJointComponent -> bodyA.distanceJointWith(bodyB, jointComponent.jointDef)
+          is FrictionJointComponent -> bodyA.frictionJointWith(bodyB, jointComponent.jointDef)
+          is GearJointComponent -> bodyA.gearJointWith(bodyB, jointComponent.jointDef)
+          is MotorJointComponent -> bodyA.motorJointWith(bodyB, jointComponent.jointDef)
+          is MouseJointComponent -> bodyA.mouseJointWith(bodyB, jointComponent.jointDef)
+          is PrismaticJointComponent -> bodyA.prismaticJointWith(bodyB, jointComponent.jointDef)
+          is PulleyJointComponent -> bodyA.pulleyJointWith(bodyB, jointComponent.jointDef)
+          is RopeJointComponent -> bodyA.ropeJointWith(bodyB, jointComponent.jointDef)
+          is RevoluteJointComponent -> bodyA.revoluteJointWith(bodyB, jointComponent.jointDef)
+          is WeldJointComponent -> bodyA.weldJointWith(bodyB, jointComponent.jointDef)
+          is WheelJointComponent -> bodyA.wheelJointWith(bodyB, jointComponent.jointDef)
         }
       joint.component = jointComponent
       entityJointMap[jointComponent] = joint
     }
   }
 
-  fun getJoint(jointComponent: JointComponent<*>): Joint {
-    return entityJointMap[jointComponent]!!
+  fun getJoint(jointComponent: JointComponent<*>): Joint? {
+    return entityJointMap[jointComponent]
   }
 
   fun removeJoint(jointComponent: JointComponent<*>): Boolean {
@@ -158,7 +119,8 @@ class SafeWorld internal constructor(val name: String, world: World) : SafeAcces
       if (!entityJointMap.contains(jointComponent)) {
         return@safeRun false
       }
-      val joint = jointComponent.joint
+      // checked above
+      val joint = jointComponent.joint!!
       // could have been removed if the associated body was already removed
       if (it.allJoints.contains(joint)) {
         it.destroyJoint(joint)

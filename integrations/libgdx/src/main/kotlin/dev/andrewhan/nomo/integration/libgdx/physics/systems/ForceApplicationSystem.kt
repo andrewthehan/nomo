@@ -11,6 +11,6 @@ class ForceApplicationSystem @Inject constructor(private val engine: NomoEngine)
   NomoSystem<ForceEvent>() {
   override suspend fun handle(event: ForceEvent) {
     val bodyComponent = engine.getComponent<BodyComponent>(event.entity)
-    bodyComponent.body.applyForceToCenter(event.newtons, true)
+    bodyComponent.body?.applyForceToCenter(event.newtons, true)
   }
 }

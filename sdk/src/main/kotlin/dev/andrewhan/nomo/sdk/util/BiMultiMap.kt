@@ -39,13 +39,13 @@ abstract class BiMultiMap<K, V> {
     }
   }
 
-  fun getKeys(): Set<K> = synchronized(forwardMap) { forwardMap.keys.toCustomSet() }
+  fun getKeys(): Set<K> = synchronized(this) { forwardMap.keys.toCustomSet() }
 
-  fun getValues(): Set<V> = synchronized(reverseMap) { reverseMap.keys.toCustomSet() }
+  fun getValues(): Set<V> = synchronized(this) { reverseMap.keys.toCustomSet() }
 
-  operator fun get(key: K): Set<V> = synchronized(forwardMap) { forwardMap[key].toCustomSet() }
+  operator fun get(key: K): Set<V> = synchronized(this) { forwardMap[key].toCustomSet() }
 
-  fun getByValue(value: V): Set<K> = synchronized(reverseMap) { reverseMap[value].toCustomSet() }
+  fun getByValue(value: V): Set<K> = synchronized(this) { reverseMap[value].toCustomSet() }
 
   fun containsKey(key: K): Boolean = forwardMap.containsKey(key)
 

@@ -51,6 +51,7 @@ class Game(
         title = this@Game.title
         width = this@Game.width
         height = this@Game.height
+        forceExit = true
       }
     app = LwjglApplication(this, config).apply { logLevel = Application.LOG_DEBUG }
   }

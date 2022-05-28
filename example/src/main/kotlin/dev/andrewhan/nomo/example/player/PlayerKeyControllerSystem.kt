@@ -41,7 +41,9 @@ class PlayerKeyControllerSystem @Inject constructor(private val engine: NomoEngi
     }
 
   override suspend fun handle(event: KeyEvent) {
-    val entity = engine.getEntityOrNull(PlayerComponent) ?: return
+    val player = engine.getEntityOrNull(PlayerComponent) ?: return
+    val playerBody = engine.getComponent<BodyComponent>(player).body ?: return
+
     when (event) {
       is KeyPressEvent ->
         if (event.key.isDirection()) {
@@ -56,6 +58,6 @@ class PlayerKeyControllerSystem @Inject constructor(private val engine: NomoEngi
 
     val direction = heldKeys.map { it.toDirection() }.fold(Vector2.Zero) { acc, v -> acc + v }.nor()
     val velocity = direction * 5f
-    engine.getComponent<BodyComponent>(entity).body.linearVelocity = velocity
+    playerBody.linearVelocity = velocity
   }
 }

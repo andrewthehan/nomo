@@ -1,8 +1,8 @@
 package dev.andrewhan.nomo.example.player
 
 import dev.andrewhan.nomo.boot.player.components.PlayerComponent
-import dev.andrewhan.nomo.boot.xp.components.LevelComponent
 import dev.andrewhan.nomo.boot.xp.events.LevelUpEvent
+import dev.andrewhan.nomo.example.walls.WallSegmentRegenerateEvent
 import dev.andrewhan.nomo.sdk.engines.NomoEngine
 import dev.andrewhan.nomo.sdk.stores.getComponent
 import dev.andrewhan.nomo.sdk.stores.getEntity
@@ -13,8 +13,9 @@ class PlayerLevelUpSystem @Inject constructor(private val engine: NomoEngine) :
   NomoSystem<LevelUpEvent>() {
   override suspend fun handle(event: LevelUpEvent) {
     val player = engine.getEntity(PlayerComponent)
-    val levelComponent = engine.getComponent<LevelComponent>(player)
+    val stats = engine.getComponent<PlayerStatsComponent>(player)
+    stats.segments++
 
-    println("TODO: Get reward")
+    engine.dispatchEvent(WallSegmentRegenerateEvent)
   }
 }

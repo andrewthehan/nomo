@@ -18,7 +18,7 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalTime::class)
 fun NomoEngine.newBall(world: SafeWorld): Entity =
   entity(
-    BallComponent,
+    BallComponent(),
     BodyComponent(world) {
       type = BodyDef.BodyType.DynamicBody
       circle(radius = 0.1f) {

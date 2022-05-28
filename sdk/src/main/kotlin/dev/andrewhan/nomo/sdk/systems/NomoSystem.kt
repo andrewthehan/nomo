@@ -22,7 +22,7 @@ enum class SystemFeatures {
 
 abstract class NomoSystem<EventType : Event>(private vararg val features: SystemFeatures) :
   System<EventType>, Lifecycle {
-  private val mutableEvents: MutableSharedFlow<EventType> = MutableSharedFlow()
+  private val mutableEvents: MutableSharedFlow<EventType> = MutableSharedFlow(replay = 128)
 
   val events: SharedFlow<EventType> = mutableEvents.asSharedFlow()
   val subscriptionCount: StateFlow<Int> = mutableEvents.subscriptionCount

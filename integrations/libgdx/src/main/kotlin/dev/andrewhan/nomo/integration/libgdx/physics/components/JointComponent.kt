@@ -1,5 +1,6 @@
 package dev.andrewhan.nomo.integration.libgdx.physics.components
 
+import com.badlogic.gdx.physics.box2d.Joint
 import com.badlogic.gdx.physics.box2d.JointDef
 import com.badlogic.gdx.physics.box2d.joints.DistanceJointDef
 import com.badlogic.gdx.physics.box2d.joints.FrictionJointDef
@@ -23,7 +24,7 @@ sealed class JointComponent<JointType : JointDef>(
   val bodyB: BodyComponent,
   val jointDef: JointType.() -> Unit
 ) : Component, Exclusive, Pendant {
-  val joint
+  val joint: Joint?
     get() = world.getJoint(this)
 
   override fun toString(): String =

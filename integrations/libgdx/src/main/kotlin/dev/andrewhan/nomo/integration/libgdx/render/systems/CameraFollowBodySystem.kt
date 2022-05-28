@@ -29,7 +29,7 @@ class CameraFollowBodySystem @Inject constructor(private val engine: NomoEngine)
       val camera = engine.getComponentOrNull<CameraComponent>(entity) ?: return@forEach
       val body = engine.getComponentOrNull<BodyComponent>(entity) ?: return@forEach
 
-      val target = body.body.position
+      val target = body.body?.position ?: return@forEach
       val distance = target - camera.worldCenter
       when (cameraFollow) {
         is ExactCameraFollowComponent -> camera.worldCenter = target

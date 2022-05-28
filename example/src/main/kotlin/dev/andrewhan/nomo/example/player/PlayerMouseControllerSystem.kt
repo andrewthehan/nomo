@@ -23,7 +23,7 @@ class PlayerMouseControllerSystem @Inject constructor(private val engine: NomoEn
       is MousePressButtonEvent -> {
         when (event.mouseButton) {
           MouseButton.LEFT -> {
-//            engine.newBall(engine.getComponent<BodyComponent>(player).world)
+            engine.newBall(engine.getComponent<BodyComponent>(player).world)
           }
           else -> {}
         }

@@ -13,6 +13,7 @@ fun NomoEngine.entity(vararg components: Component): Entity {
 }
 
 fun NomoEngine.entity(componentPackage: ComponentPackage): Entity {
+  check(componentPackage.components.isNotEmpty()) { "Component package cannot be empty" }
   val entity = newEntity()
   apply { entity bind componentPackage }
   return entity

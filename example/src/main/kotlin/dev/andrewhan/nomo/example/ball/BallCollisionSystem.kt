@@ -11,10 +11,10 @@ import dev.andrewhan.nomo.sdk.engines.NomoEngine
 import dev.andrewhan.nomo.sdk.stores.containsComponent
 import dev.andrewhan.nomo.sdk.stores.getComponent
 import dev.andrewhan.nomo.sdk.stores.getEntity
-import ktx.math.plus
-import ktx.math.times
 import javax.inject.Inject
 import kotlin.math.absoluteValue
+import ktx.math.plus
+import ktx.math.times
 
 class BallCollisionSystem @Inject constructor(private val engine: NomoEngine) :
   CollisionHandlerSystem(engine) {
@@ -32,10 +32,10 @@ class BallCollisionSystem @Inject constructor(private val engine: NomoEngine) :
     val player = engine.getEntity(PlayerComponent)
     val stats = engine.getComponent<PlayerStatsComponent>(player)
 
-    val playerBody = engine.getComponent<BodyComponent>(firstEntity)
+    val playerBody = engine.getComponent<BodyComponent>(firstEntity).body ?: return
 
     val contactPoint = worldManifold.points[0]
-    val localContactPoint = playerBody.body.getLocalPoint(contactPoint)
+    val localContactPoint = playerBody.getLocalPoint(contactPoint)
 
     // hitting the back of the player
     if (localContactPoint.x < 0) return
@@ -44,8 +44,8 @@ class BallCollisionSystem @Inject constructor(private val engine: NomoEngine) :
     val regularThreshold = 1 / 3f
     if (localContactPoint.y.absoluteValue < playerHeight * regularThreshold / 2) return
 
-    val ballBody = engine.getComponent<BodyComponent>(secondEntity)
-    ballBody.body.linearVelocity =
-      (Direction.RIGHT + localContactPoint).nor() * ballBody.body.linearVelocity.len()
+    val ballBody = engine.getComponent<BodyComponent>(secondEntity).body ?: return
+    ballBody.linearVelocity =
+      (Direction.RIGHT + localContactPoint).nor() * ballBody.linearVelocity.len()
   }
 }
