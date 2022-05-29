@@ -24,6 +24,7 @@ import dev.andrewhan.nomo.sdk.io.KeyPressEvent
 import dev.andrewhan.nomo.sdk.io.MouseButtonEvent
 import dev.andrewhan.nomo.sdk.util.Size
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import ktx.async.KTX
 import ktx.async.newAsyncContext
@@ -31,7 +32,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
+@OptIn(ExperimentalTime::class, DelicateCoroutinesApi::class)
 fun main() {
   Dispatchers.shutdown()
   val updateScope = CoroutineScope(newAsyncContext(8, "UpdateScope"))

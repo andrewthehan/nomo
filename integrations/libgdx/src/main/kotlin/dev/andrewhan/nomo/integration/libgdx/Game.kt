@@ -2,8 +2,8 @@ package dev.andrewhan.nomo.integration.libgdx
 
 import com.badlogic.gdx.Application
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.backends.lwjgl.LwjglApplication
-import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration
 import dev.andrewhan.nomo.integration.libgdx.render.events.RenderEvent
 import dev.andrewhan.nomo.sdk.engines.NomoEngine
 import dev.andrewhan.nomo.sdk.engines.TimeStep
@@ -11,7 +11,6 @@ import dev.andrewhan.nomo.sdk.engines.key
 import dev.andrewhan.nomo.sdk.events.UpdateEvent
 import kotlinx.coroutines.runBlocking
 import ktx.app.KtxApplicationAdapter
-import ktx.app.KtxInputAdapter
 import ktx.async.KtxAsync
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.ZERO
@@ -38,22 +37,20 @@ class Game(
   private val width: Int,
   private val height: Int,
   private val engine: NomoEngine
-) : KtxApplicationAdapter, KtxInputAdapter {
+) : KtxApplicationAdapter {
 
   private val timeStep: Duration = engine.getInstance(key<Duration>(TimeStep::class))
   private var accumulator: Duration = ZERO
 
-  private lateinit var app: LwjglApplication
+  private lateinit var app: Lwjgl3Application
 
   fun start() {
     val config =
-      LwjglApplicationConfiguration().apply {
-        title = this@Game.title
-        width = this@Game.width
-        height = this@Game.height
-        forceExit = true
+      Lwjgl3ApplicationConfiguration().apply {
+        setTitle(title)
+        setWindowedMode(width, height)
       }
-    app = LwjglApplication(this, config).apply { logLevel = Application.LOG_DEBUG }
+    app = Lwjgl3Application(this, config).apply { logLevel = Application.LOG_DEBUG }
   }
 
   override fun create() {

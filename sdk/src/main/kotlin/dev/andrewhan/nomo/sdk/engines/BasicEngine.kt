@@ -189,6 +189,15 @@ constructor(
 
     withContext(scope.coroutineContext) { latch.await() }
 
+    buildString {
+        appendLine("Engine started with following systems:")
+        systemOrder.nodes
+          .map { it.systemKey.typeLiteral.rawType.simpleName }
+          .sorted()
+          .forEach { appendLine("  $it") }
+      }
+      .let { println(it) }
+
     systemOrder.nodes.map { getInstance(it.systemKey) }.forEach { it.start() }
   }
 }
