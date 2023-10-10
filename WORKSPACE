@@ -21,9 +21,8 @@ kt_register_toolchains()  # to use the default toolchain, otherwise see toolchai
 # END Kotlin
 
 # START Maven deps
-RULES_JVM_EXTERNAL_TAG = "4.3"
-
-RULES_JVM_EXTERNAL_SHA = "6274687f6fc5783b589f56a2f1ed60de3ce1f99bc4e8f9edef3de43bdf7c6e74"
+RULES_JVM_EXTERNAL_TAG = "4.5"
+RULES_JVM_EXTERNAL_SHA = "b17d7388feb9bfa7f2fa09031b32707df529f26c91ab9e5d909eb1676badd9a6"
 
 http_archive(
     name = "rules_jvm_external",
@@ -32,7 +31,16 @@ http_archive(
     url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
 )
 
+load("@rules_jvm_external//:repositories.bzl", "rules_jvm_external_deps")
+
+rules_jvm_external_deps()
+
+load("@rules_jvm_external//:setup.bzl", "rules_jvm_external_setup")
+
+rules_jvm_external_setup()
+
 load("@rules_jvm_external//:defs.bzl", "maven_install")
+
 load("@rules_jvm_external//:specs.bzl", "maven")
 
 KOTLIN_VERSION = "1.6.21"
@@ -80,5 +88,6 @@ maven_install(
     repositories = [
         "https://repo1.maven.org/maven2",
     ],
+    strict_visibility = True,
 )
 # END Maven deps
